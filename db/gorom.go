@@ -32,7 +32,7 @@ func ConnectGorm(wg *sync.WaitGroup) {
 	}
 
 	// 테이블 생성
-	err = dbConnections[0].AutoMigrate(&types.Conversation{}, &types.User{}, &types.ConversationUser{})
+	err = dbConnections[0].AutoMigrate(&types.Conversation{}, &types.User{}, &types.ConversationUser{}, &types.Device{})
 	if err != nil {
 		fmt.Println("Failed to create table:", err)
 		return
@@ -43,4 +43,5 @@ func ConnectGorm(wg *sync.WaitGroup) {
 	// email 컬럼에 인덱스를 추가하는 SQL 쿼리
 	// 인덱스를 추가하려면 이 SQL 쿼리를 실행해야합니다.
 	// dbConnections[0].Exec("CREATE INDEX idx_users_email ON users(email)")
+	// dbConnections[0].Exec("CREATE INDEX idx_devices_push_token ON devices(push_token)")
 }

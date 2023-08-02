@@ -14,38 +14,38 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+func GetDeviceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	userId, err := strconv.ParseInt(params["id"], 10, 64)
+	deviceId, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
 		// conversationIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid user Id"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid device Id"})
 		return
 	}
 
-	user, err := db.GetUser(userId)
+	device, err := db.GetDevice(deviceId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"error": "User not found"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "Device not found"})
 			return
 		}
 		// 다른 에러가 발생한 경우 500 에러 반환
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get user"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get device"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.User{"user": *user})
+	json.NewEncoder(w).Encode(map[string]types.Device{"device": *device})
 }
 
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+func CreateDeviceHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var cu types.CreateUser
-	err := json.NewDecoder(r.Body).Decode(&cu)
+	var cd types.CreateDevice
+	err := json.NewDecoder(r.Body).Decode(&cd)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request payload"})
@@ -54,35 +54,35 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	// validator를 사용하여 필수 파라미터 체크
 	validate := validator.New()
-	if err := validate.Struct(cu); err != nil {
+	if err := validate.Struct(cd); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
 		return
 	}
 
-	foundUser, err := db.GetUserByEmail(cu.Email)
-	if foundUser != nil {
+	foundDevice, err := db.GetDeviceByPushToken(cd.PushToken)
+	if foundDevice != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated user"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated device"})
 		return
 	}
 
-	var user = types.User{
-		Name:      cu.Name,
-		Password:  cu.Password,
-		Email:     cu.Email,
-		Age:       cu.Age,
-		Gender:    cu.Gender,
+	var device = types.Device{
+		UserId:    cd.UserId,
+		PushToken: cd.PushToken,
+		Platform:  cd.Platform,
+		Version:   cd.Version,
+		Activated: true,
 		CreatedAt: time.Now().UTC().Format(time.RFC3339),
 		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
-	createdUser, err := db.CreateUser(&user)
+	createdDevice, err := db.CreateDevice(&device)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create user"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create device"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.User{"user": *createdUser})
+	json.NewEncoder(w).Encode(map[string]types.Device{"device": *createdDevice})
 }
