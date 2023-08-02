@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: my-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: mocha
+    ports:
+      - "5431:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:latest
+    container_name: my-redis
+    restart: always
+    ports:
+      - "6378:6379"
+    volumes:
+      - ./redis_data:/data
