@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"mocha/db"
+	"mocha/types"
 	"net/http"
 	"strconv"
 
@@ -36,5 +37,5 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(messages)
+	json.NewEncoder(w).Encode(map[string][]types.Message{"messages": messages})
 }

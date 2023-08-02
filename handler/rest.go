@@ -21,6 +21,9 @@ func StartRest(wg *sync.WaitGroup) {
 
 	router.HandleFunc("/conversations/{id}/messages", service.GetMessages).Methods("GET")
 
+	router.HandleFunc("/users/{id}", service.GetUserHandler).Methods("GET")
+	router.HandleFunc("/users", service.CreateUserHandler).Methods("POST")
+
 	// 기본 HTTP 서버 시작
 	fmt.Println("REST server is listening on port 8000...")
 	log.Fatal(http.ListenAndServe(":8000", router))

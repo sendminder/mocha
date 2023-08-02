@@ -39,7 +39,7 @@ func GetUserConversationsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(conversations)
+	json.NewEncoder(w).Encode(map[string][]types.Conversation{"conversations": conversations})
 }
 
 // GetConversationHandler는 특정 채팅방을 반환합니다.
@@ -68,7 +68,7 @@ func GetConversationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(conversation)
+	json.NewEncoder(w).Encode(map[string]types.Conversation{"conversation": *conversation})
 }
 
 // CreateConversationHandler는 새로운 채팅방을 생성합니다.
@@ -92,7 +92,7 @@ func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(createdConv)
+	json.NewEncoder(w).Encode(map[string]types.Conversation{"conversation": *createdConv})
 
 	// conversation user 생성
 	for _, value := range cc.JoinedUsers {

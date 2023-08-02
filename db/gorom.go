@@ -39,4 +39,8 @@ func ConnectGorm(wg *sync.WaitGroup) {
 	}
 
 	fmt.Println("Table created successfully.")
+
+	// email 컬럼에 인덱스를 추가하는 SQL 쿼리
+	// 인덱스를 추가하려면 이 SQL 쿼리를 실행해야합니다.
+	// dbConnections[0].Exec("CREATE INDEX idx_users_email ON users(email)")
 }
