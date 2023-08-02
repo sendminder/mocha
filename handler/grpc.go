@@ -9,6 +9,7 @@ import (
 
 	"mocha/db"
 	pb "mocha/proto/message"
+	"mocha/types"
 
 	"mocha/util"
 
@@ -37,7 +38,7 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 		Text:           req.Text,
 	}
 
-	dynamoMessage := &db.Message{
+	dynamoMessage := &types.Message{
 		Id:             msgId,
 		ConversationId: req.ConversationId,
 		SenderID:       req.SenderId,

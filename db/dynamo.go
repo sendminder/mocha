@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"mocha/types"
 	"sync"
 	"time"
 
@@ -12,17 +13,6 @@ import (
 )
 
 var svc *dynamodb.DynamoDB
-
-type Message struct {
-	Id             int64  `json:"id"`
-	Text           string `json:"text"`
-	Animal         string `json:"animal"`
-	Encrypted      bool   `json:"encrypted"`
-	ConversationId int64  `json:"conversation_id"`
-	SenderID       int64  `json:"sender_id"`
-	CreatedTime    string // Modified to be string type
-	UpdatedTime    string // Modified to be string type
-}
 
 func ConnectDynamo(wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -105,7 +95,7 @@ func createMessageTable() {
 	fmt.Println("테이블 생성 완료:", tableName)
 }
 
-func CreateMessage(message *Message) error {
+func CreateMessage(message *types.Message) error {
 	message.CreatedTime = time.Now().UTC().Format(time.RFC3339)
 	message.UpdatedTime = message.CreatedTime
 
@@ -129,7 +119,7 @@ func CreateMessage(message *Message) error {
 	return nil
 }
 
-func GetMessagesByConversationID(conversationID int64) ([]Message, error) {
+func GetMessagesByConversationID(conversationID int64) ([]types.Message, error) {
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
 		":val": {
 			N: aws.String(fmt.Sprintf("%d", conversationID)),
@@ -147,7 +137,7 @@ func GetMessagesByConversationID(conversationID int64) ([]Message, error) {
 		return nil, err
 	}
 
-	var messages []Message
+	var messages []types.Message
 	err = dynamodbattribute.UnmarshalListOfMaps(result.Items, &messages)
 	if err != nil {
 		return nil, err

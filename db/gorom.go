@@ -2,9 +2,8 @@ package db
 
 import (
 	"fmt"
-	"math/rand"
+	"mocha/types"
 	"sync"
-	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -14,33 +13,6 @@ var dbConnections []*gorm.DB
 var dbLocks []*sync.RWMutex
 
 const numConnections = 10
-
-type Conversation struct {
-	Id            int64  `gorm:"primaryKey;autoIncrement"`
-	Type          string `gorm:"not null"`
-	Name          string `gorm:"not null"`
-	HostUserId    int64  `gorm:"not null"`
-	LastMessageId int64
-	CreatedAt     time.Time
-	UpdatedAt     time.Time
-}
-
-type User struct {
-	Id        int64  `gorm:"primaryKey"`
-	Name      string `gorm:"not null"`
-	Password  string `gorm:"not null"`
-	Email     string `gorm:"not null"`
-	Age       int    `gorm:"not null"`
-	Gender    string `gorm:"not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-}
-
-type ConversationUser struct {
-	ConversationId    int64 `gorm:"primaryKey"`
-	UserId            int64 `gorm:"primaryKey"`
-	LastSeenMessageID int64
-}
 
 func ConnectGorm(wg *sync.WaitGroup) {
 	defer wg.Done()
@@ -60,91 +32,11 @@ func ConnectGorm(wg *sync.WaitGroup) {
 	}
 
 	// 테이블 생성
-	err = dbConnections[0].AutoMigrate(&Conversation{}, &User{}, &ConversationUser{})
+	err = dbConnections[0].AutoMigrate(&types.Conversation{}, &types.User{}, &types.ConversationUser{})
 	if err != nil {
 		fmt.Println("Failed to create table:", err)
 		return
 	}
 
 	fmt.Println("Table created successfully.")
-}
-
-func CreateConversation(conversation *Conversation) (*Conversation, error) {
-	radIdx := rand.Intn(10)
-	dbLocks[radIdx].Lock()
-	defer dbLocks[radIdx].Unlock()
-
-	result := dbConnections[radIdx].Create(conversation)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return conversation, nil
-}
-
-func GetConversationByID(conversationID int64) (*Conversation, error) {
-	radIdx := rand.Intn(10)
-	dbLocks[radIdx].Lock()
-	defer dbLocks[radIdx].Unlock()
-
-	var conversation Conversation
-	result := dbConnections[radIdx].First(&conversation, conversationID)
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return &conversation, nil
-}
-
-func GetUserConversations(uesrId int64) ([]Conversation, error) {
-	radIdx := rand.Intn(10)
-	dbLocks[radIdx].Lock()
-	defer dbLocks[radIdx].Unlock()
-
-	// GORM을 이용하여 conversations 테이블과 conversation_users 테이블을 JOIN하여 특정 사용자가 참여한 채팅방들을 가져옴
-	var conversations []Conversation
-	result := dbConnections[radIdx].
-		Joins("JOIN conversation_users ON conversations.id = conversation_users.conversation_id").
-		Where("conversation_users.user_id = ?", uesrId).
-		Find(&conversations)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return conversations, nil
-}
-
-func UpdateConversation(conversation *Conversation) error {
-	radIdx := rand.Intn(10)
-	dbLocks[radIdx].Lock()
-	defer dbLocks[radIdx].Unlock()
-
-	result := dbConnections[radIdx].Save(conversation)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
-func DeleteConversation(conversationID uint) error {
-	radIdx := rand.Intn(10)
-	dbLocks[radIdx].Lock()
-	defer dbLocks[radIdx].Unlock()
-
-	result := dbConnections[radIdx].Delete(&Conversation{}, conversationID)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
-}
-
-func CreateConversationUser(cuser *ConversationUser) error {
-	radIdx := rand.Intn(10)
-	dbLocks[radIdx].Lock()
-	defer dbLocks[radIdx].Unlock()
-
-	result := dbConnections[radIdx].Create(cuser)
-	if result.Error != nil {
-		return result.Error
-	}
-	return nil
 }
