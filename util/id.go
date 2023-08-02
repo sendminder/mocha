@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Snowflake 구조체는 Snowflake ID 생성기를 나타냅니다.
+// Snowflake 구조체는 Snowflake Id 생성기를 나타냅니다.
 type Snowflake struct {
 	mu          sync.Mutex
 	lastTime    int64

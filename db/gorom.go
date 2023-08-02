@@ -16,17 +16,17 @@ var dbLocks []*sync.RWMutex
 const numConnections = 10
 
 type Conversation struct {
-	ID            int64  `gorm:"primaryKey;autoIncrement"`
+	Id            int64  `gorm:"primaryKey;autoIncrement"`
 	Type          string `gorm:"not null"`
 	Name          string `gorm:"not null"`
-	HostUserID    int64  `gorm:"not null"`
-	LastMessageID int64
+	HostUserId    int64  `gorm:"not null"`
+	LastMessageId int64
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }
 
 type User struct {
-	ID        int64  `gorm:"primaryKey"`
+	Id        int64  `gorm:"primaryKey"`
 	Name      string `gorm:"not null"`
 	Password  string `gorm:"not null"`
 	Email     string `gorm:"not null"`
@@ -37,8 +37,8 @@ type User struct {
 }
 
 type ConversationUser struct {
-	ConversationID    int64 `gorm:"primaryKey"`
-	UserID            int64 `gorm:"primaryKey"`
+	ConversationId    int64 `gorm:"primaryKey"`
+	UserId            int64 `gorm:"primaryKey"`
 	LastSeenMessageID int64
 }
 

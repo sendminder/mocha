@@ -7,6 +7,7 @@ import (
 	"net"
 	"sync"
 
+	"mocha/db"
 	pb "mocha/proto/message"
 
 	"mocha/util"
@@ -36,6 +37,19 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 		Text:           req.Text,
 	}
 
+	dynamoMessage := &db.Message{
+		Id:             msgId,
+		ConversationId: req.ConversationId,
+		SenderID:       req.SenderId,
+		Text:           req.Text,
+		Animal:         "cat",
+		Encrypted:      true,
+	}
+	err := db.CreateMessage(dynamoMessage)
+
+	if err != nil {
+		fmt.Printf("create message error 발생 %v\n", err)
+	}
 	return &pb.ResponseCreateMessage{
 		Message:     newMessage,
 		JoinedUsers: []int64{1, 2, 3},
@@ -59,7 +73,7 @@ func StartGrpc(wg *sync.WaitGroup) {
 }
 
 func initSnowflake() {
-	// 노드 ID와 노드 ID 비트 수 설정
+	// 노드 ID와 노드 Id 비트 수 설정
 	nodeID = 1
 	nodeIDBits = uint(10)
 	sf = util.NewSnowflake(nodeID, nodeIDBits)

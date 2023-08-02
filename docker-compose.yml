@@ -22,3 +22,8 @@ services:
       - "6378:6379"
     volumes:
       - ./redis_data:/data
+
+  dynamodb:
+    image: amazon/dynamodb-local
+    ports:
+      - "8001:8000"
