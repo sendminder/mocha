@@ -44,16 +44,33 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 		SenderID:       req.SenderId,
 		Text:           req.Text,
 		Animal:         "cat",
-		Encrypted:      true,
 	}
 	err := db.CreateMessage(dynamoMessage)
-
 	if err != nil {
-		fmt.Printf("create message error 발생 %v\n", err)
+		fmt.Printf("create message error %v\n", err)
 	}
+	err = db.SetLastSeenMessageId(req.SenderId, req.ConversationId, msgId)
+	if err != nil {
+		fmt.Printf("set LastSeenMessageId error %v\n", err)
+	}
+
 	return &pb.ResponseCreateMessage{
 		Message:     newMessage,
 		JoinedUsers: []int64{1, 2, 3},
+	}, nil
+}
+
+func (s *MessageServer) ReadMessage(ctx context.Context, req *pb.RequestReadMessage) (*pb.ResponseReadMessage, error) {
+	fmt.Printf("ReadMessage u=%d c=%d m=%d\n", req.UserId, req.ConversationId, req.MessageId)
+	err := db.SetLastSeenMessageId(req.UserId, req.ConversationId, req.MessageId)
+	if err != nil {
+		fmt.Printf("read message error %v\n", err)
+		return &pb.ResponseReadMessage{
+			Status: "error",
+		}, nil
+	}
+	return &pb.ResponseReadMessage{
+		Status: "ok",
 	}, nil
 }
 

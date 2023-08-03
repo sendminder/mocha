@@ -84,3 +84,22 @@ func CreateConversationUser(cuser *types.ConversationUser) error {
 	}
 	return nil
 }
+
+func SetLastSeenMessageId(userId int64, convId int64, msgId int64) error {
+	randIdx := rand.Intn(10)
+	dbLocks[randIdx].Lock()
+	defer dbLocks[randIdx].Unlock()
+
+	var cu types.ConversationUser
+	result := dbConnections[randIdx].First(&cu, convId, userId)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	cu.LastSeenMessageId = msgId
+	result = dbConnections[randIdx].Save(cu)
+	if result.Error != nil {
+		return result.Error
+	}
+	return nil
+}

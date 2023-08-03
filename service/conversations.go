@@ -78,12 +78,13 @@ func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewDecoder(r.Body).Decode(&cc)
 
 	var conv = types.Conversation{
-		Type:          "dm",
-		Name:          cc.Name,
-		HostUserId:    cc.HostUserId,
-		LastMessageId: 0,
-		CreatedAt:     time.Now().UTC().Format(time.RFC3339),
-		UpdatedAt:     time.Now().UTC().Format(time.RFC3339),
+		Type:            "dm",
+		Name:            cc.Name,
+		HostUserId:      cc.HostUserId,
+		LastMessageId:   0,
+		LastDecryptedId: 0,
+		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
+		UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 	}
 	createdConv, err := db.CreateConversation(&conv)
 	if err != nil {
@@ -99,7 +100,7 @@ func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
 		var cuser = types.ConversationUser{
 			ConversationId:    createdConv.Id,
 			UserId:            value,
-			LastSeenMessageID: 0,
+			LastSeenMessageId: 0,
 		}
 		err = db.CreateConversationUser(&cuser)
 		if err != nil {
