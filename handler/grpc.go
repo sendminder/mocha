@@ -66,10 +66,34 @@ func (s *MessageServer) ReadMessage(ctx context.Context, req *pb.RequestReadMess
 	if err != nil {
 		fmt.Printf("read message error %v\n", err)
 		return &pb.ResponseReadMessage{
-			Status: "error",
+			Status:  "error",
+			Message: err.Error(),
 		}, nil
 	}
 	return &pb.ResponseReadMessage{
+		Status: "ok",
+	}, nil
+}
+
+func (s *MessageServer) DecryptConversation(ctx context.Context, req *pb.RequestDecryptConversation) (*pb.ResponseDecryptConversation, error) {
+	fmt.Printf("DecryptConversation c=%d\n", req.ConversationId)
+	lastMessageId, err := db.GetLastMessageIdByConversationID(req.ConversationId)
+	if err != nil {
+		fmt.Printf("decrypt conversation error %v\n", err)
+		return &pb.ResponseDecryptConversation{
+			Status:  "error",
+			Message: err.Error(),
+		}, nil
+	}
+	err = db.SetLastDecryptMessageId(req.ConversationId, lastMessageId)
+	if err != nil {
+		fmt.Printf("decrypt conversation error %v\n", err)
+		return &pb.ResponseDecryptConversation{
+			Status:  "error",
+			Message: err.Error(),
+		}, nil
+	}
+	return &pb.ResponseDecryptConversation{
 		Status: "ok",
 	}, nil
 }

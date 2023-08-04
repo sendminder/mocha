@@ -145,3 +145,38 @@ func GetMessagesByConversationID(conversationID int64) ([]types.Message, error) 
 
 	return messages, nil
 }
+
+func GetLastMessageIdByConversationID(conversationID int64) (int64, error) {
+	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
+		":val": {
+			N: aws.String(fmt.Sprintf("%d", conversationID)),
+		},
+	}
+
+	queryInput := &dynamodb.QueryInput{
+		TableName:                 aws.String("messages"),
+		KeyConditionExpression:    aws.String("conversation_id = :val"),
+		ExpressionAttributeValues: expressionAttributeValues,
+		ScanIndexForward:          aws.Bool(false), // Sort in descending order (latest first)
+		Limit:                     aws.Int64(1),    // Get only the latest message
+	}
+
+	result, err := svc.Query(queryInput)
+	if err != nil {
+		return 0, err
+	}
+
+	if len(result.Items) == 0 {
+		// No messages found for the given conversation ID
+		return 0, nil
+	}
+
+	// Unmarshal the last message ID
+	var lastMessage types.Message
+	err = dynamodbattribute.UnmarshalMap(result.Items[0], &lastMessage)
+	if err != nil {
+		return 0, err
+	}
+
+	return lastMessage.Id, nil
+}

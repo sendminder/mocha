@@ -103,3 +103,19 @@ func SetLastSeenMessageId(userId int64, convId int64, msgId int64) error {
 	}
 	return nil
 }
+
+func SetLastDecryptMessageId(convId int64, msgId int64) error {
+	randIdx := rand.Intn(10)
+	dbLocks[randIdx].Lock()
+	defer dbLocks[randIdx].Unlock()
+
+	// Save the conversation with only the LastDecryptMsgID updated
+	result := dbConnections[randIdx].Model(&types.Conversation{}).
+		Where("conversation_id = ?", convId).
+		Update("last_decrypt_msg_id", msgId)
+	if result.Error != nil {
+		return result.Error
+	}
+
+	return nil
+}
