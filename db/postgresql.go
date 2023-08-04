@@ -3,6 +3,7 @@ package db
 import (
 	"database/sql"
 	"fmt"
+	"log"
 	"sync"
 
 	_ "github.com/lib/pq"
@@ -62,7 +63,7 @@ func ConnectPostgresql(wg *sync.WaitGroup) {
 	// 설정 파일을 사용하여 viper 초기화
 	viper.SetConfigFile("config.yaml")
 	if err := viper.ReadInConfig(); err != nil {
-		fmt.Println("Failed to read config file:", err)
+		log.Println("Failed to read config file:", err)
 		return
 	}
 
@@ -74,7 +75,7 @@ func ConnectPostgresql(wg *sync.WaitGroup) {
 	dbName := viper.GetString("postgres.dbname")
 
 	// 데이터베이스 연결 문자열 생성
-	fmt.Printf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable\n",
+	log.Printf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable\n",
 		host, port, user, password, dbName)
 	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbName)
@@ -82,7 +83,7 @@ func ConnectPostgresql(wg *sync.WaitGroup) {
 	// PostgreSQL 데이터베이스 연결
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
-		fmt.Println("Failed to connect to PostgreSQL:", err)
+		log.Println("Failed to connect to PostgreSQL:", err)
 		return
 	}
 	defer db.Close()
@@ -90,8 +91,8 @@ func ConnectPostgresql(wg *sync.WaitGroup) {
 	// 테이블 생성 함수 호출
 	err = createTables(db)
 	if err != nil {
-		fmt.Println("Failed to create tables:", err)
+		log.Println("Failed to create tables:", err)
 		return
 	}
-	fmt.Println("Tables created successfully.")
+	log.Println("Tables created successfully.")
 }

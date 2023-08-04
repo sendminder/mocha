@@ -2,6 +2,7 @@ package db
 
 import (
 	"fmt"
+	"log"
 	"mocha/types"
 	"sync"
 	"time"
@@ -47,7 +48,7 @@ func ConnectDynamo(wg *sync.WaitGroup) {
 		TableName: aws.String(tableName),
 	})
 	if err != nil {
-		fmt.Println("Failed to delete table:", err)
+		log.Println("Failed to delete table:", err)
 		return
 	}
 
@@ -92,7 +93,7 @@ func createMessageTable() {
 		panic(err)
 	}
 
-	fmt.Println("테이블 생성 완료:", tableName)
+	log.Println("테이블 생성 완료:", tableName)
 }
 
 func CreateMessage(message *types.Message) error {
@@ -109,7 +110,7 @@ func CreateMessage(message *types.Message) error {
 		TableName: aws.String("messages"),
 	}
 
-	fmt.Println(input)
+	log.Println(input)
 
 	_, err = svc.PutItem(input)
 	if err != nil {

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net"
 	"sync"
@@ -27,7 +26,7 @@ type MessageServer struct {
 }
 
 func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreateMessage) (*pb.ResponseCreateMessage, error) {
-	fmt.Println("CreateMessage text =", req.Text)
+	log.Println("CreateMessage text =", req.Text)
 	msgId := sf.Generate()
 
 	// 새로운 Message 생성
@@ -36,6 +35,7 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 		ConversationId: req.ConversationId,
 		SenderId:       req.SenderId,
 		Text:           req.Text,
+		Animal:         "cat",
 	}
 
 	dynamoMessage := &types.Message{
@@ -47,27 +47,36 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 	}
 	err := db.CreateMessage(dynamoMessage)
 	if err != nil {
-		fmt.Printf("create message error %v\n", err)
+		log.Printf("create message error %v\n", err)
+		return &pb.ResponseCreateMessage{
+			Status:       "error",
+			ErrorMessage: err.Error(),
+		}, nil
 	}
 	err = db.SetLastSeenMessageId(req.SenderId, req.ConversationId, msgId)
 	if err != nil {
-		fmt.Printf("set LastSeenMessageId error %v\n", err)
+		log.Printf("set LastSeenMessageId error %v\n", err)
+		return &pb.ResponseCreateMessage{
+			Status:       "error",
+			ErrorMessage: err.Error(),
+		}, nil
 	}
 
 	return &pb.ResponseCreateMessage{
+		Status:      "ok",
 		Message:     newMessage,
 		JoinedUsers: []int64{1, 2, 3},
 	}, nil
 }
 
 func (s *MessageServer) ReadMessage(ctx context.Context, req *pb.RequestReadMessage) (*pb.ResponseReadMessage, error) {
-	fmt.Printf("ReadMessage u=%d c=%d m=%d\n", req.UserId, req.ConversationId, req.MessageId)
+	log.Printf("ReadMessage u=%d c=%d m=%d\n", req.UserId, req.ConversationId, req.MessageId)
 	err := db.SetLastSeenMessageId(req.UserId, req.ConversationId, req.MessageId)
 	if err != nil {
-		fmt.Printf("read message error %v\n", err)
+		log.Printf("read message error %v\n", err)
 		return &pb.ResponseReadMessage{
-			Status:  "error",
-			Message: err.Error(),
+			Status:       "error",
+			ErrorMessage: err.Error(),
 		}, nil
 	}
 	return &pb.ResponseReadMessage{
@@ -76,21 +85,21 @@ func (s *MessageServer) ReadMessage(ctx context.Context, req *pb.RequestReadMess
 }
 
 func (s *MessageServer) DecryptConversation(ctx context.Context, req *pb.RequestDecryptConversation) (*pb.ResponseDecryptConversation, error) {
-	fmt.Printf("DecryptConversation c=%d\n", req.ConversationId)
+	log.Printf("DecryptConversation c=%d\n", req.ConversationId)
 	lastMessageId, err := db.GetLastMessageIdByConversationID(req.ConversationId)
 	if err != nil {
-		fmt.Printf("decrypt conversation error %v\n", err)
+		log.Printf("decrypt conversation error %v\n", err)
 		return &pb.ResponseDecryptConversation{
-			Status:  "error",
-			Message: err.Error(),
+			Status:       "error",
+			ErrorMessage: err.Error(),
 		}, nil
 	}
 	err = db.SetLastDecryptMessageId(req.ConversationId, lastMessageId)
 	if err != nil {
-		fmt.Printf("decrypt conversation error %v\n", err)
+		log.Printf("decrypt conversation error %v\n", err)
 		return &pb.ResponseDecryptConversation{
-			Status:  "error",
-			Message: err.Error(),
+			Status:       "error",
+			ErrorMessage: err.Error(),
 		}, nil
 	}
 	return &pb.ResponseDecryptConversation{
@@ -108,7 +117,7 @@ func StartGrpc(wg *sync.WaitGroup) {
 	}
 	srv := grpc.NewServer()
 	pb.RegisterMessageServiceServer(srv, &MessageServer{})
-	fmt.Println("gRPC server is listening on port 3100...")
+	log.Println("gRPC server is listening on port 3100...")
 	if err := srv.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}

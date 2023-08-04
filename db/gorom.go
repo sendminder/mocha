@@ -1,7 +1,7 @@
 package db
 
 import (
-	"fmt"
+	"log"
 	"mocha/types"
 	"sync"
 
@@ -23,22 +23,22 @@ func ConnectGorm(wg *sync.WaitGroup) {
 	for i := 0; i < numConnections; i++ {
 		db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 		if err != nil {
-			fmt.Println("Failed to connect to database:", err)
+			log.Println("Failed to connect to database:", err)
 			return
 		}
 		dbConnections = append(dbConnections, db)
 		dbLocks = append(dbLocks, new(sync.RWMutex))
-		fmt.Println("connected with db", i)
+		log.Println("connected with db", i)
 	}
 
 	// 테이블 생성
 	err = dbConnections[0].AutoMigrate(&types.Conversation{}, &types.User{}, &types.ConversationUser{}, &types.Device{})
 	if err != nil {
-		fmt.Println("Failed to create table:", err)
+		log.Println("Failed to create table:", err)
 		return
 	}
 
-	fmt.Println("Table created successfully.")
+	log.Println("Table created successfully.")
 
 	// email 컬럼에 인덱스를 추가하는 SQL 쿼리
 	// 인덱스를 추가하려면 이 SQL 쿼리를 실행해야합니다.

@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"log"
 	"mocha/service"
 	"net/http"
@@ -27,6 +26,6 @@ func StartRest(wg *sync.WaitGroup) {
 	router.HandleFunc("/devices/{id}", service.GetDeviceHandler).Methods("GET")
 	router.HandleFunc("/devices", service.CreateDeviceHandler).Methods("POST")
 
-	fmt.Println("REST server is listening on port 8000...")
+	log.Println("REST server is listening on port 8000...")
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
