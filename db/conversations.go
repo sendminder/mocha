@@ -119,3 +119,24 @@ func SetLastDecryptMessageId(convId int64, msgId int64) error {
 
 	return nil
 }
+
+func GetJoinedUsers(conversationID int64) ([]int64, error) {
+	randIdx := rand.Intn(10)
+	dbLocks[randIdx].Lock()
+	defer dbLocks[randIdx].Unlock()
+
+	var conversationUsers []types.ConversationUser
+	result := dbConnections[randIdx].
+		Where("conversation_id = ?", conversationID).
+		Find(&conversationUsers)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	joinedUsers := make([]int64, len(conversationUsers))
+	for i, cu := range conversationUsers {
+		joinedUsers[i] = cu.UserId
+	}
+
+	return joinedUsers, nil
+}

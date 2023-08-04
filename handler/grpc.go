@@ -55,7 +55,16 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 	}
 	err = db.SetLastSeenMessageId(req.SenderId, req.ConversationId, msgId)
 	if err != nil {
-		log.Printf("set LastSeenMessageId error %v\n", err)
+		log.Printf("SetLastSeenMessageId error %v\n", err)
+		return &pb.ResponseCreateMessage{
+			Status:       "error",
+			ErrorMessage: err.Error(),
+		}, nil
+	}
+
+	joinedUsers, err := db.GetJoinedUsers(req.ConversationId)
+	if err != nil {
+		log.Printf("GetJoinedUsers error %v\n", err)
 		return &pb.ResponseCreateMessage{
 			Status:       "error",
 			ErrorMessage: err.Error(),
@@ -65,7 +74,7 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 	return &pb.ResponseCreateMessage{
 		Status:      "ok",
 		Message:     newMessage,
-		JoinedUsers: []int64{1, 2, 3},
+		JoinedUsers: joinedUsers,
 	}, nil
 }
 
@@ -109,8 +118,6 @@ func (s *MessageServer) DecryptConversation(ctx context.Context, req *pb.Request
 
 func StartGrpc(wg *sync.WaitGroup) {
 	defer wg.Done()
-	initSnowflake()
-
 	listener, err := net.Listen("tcp", ":3100")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
@@ -123,9 +130,10 @@ func StartGrpc(wg *sync.WaitGroup) {
 	}
 }
 
-func initSnowflake() {
+func init() {
 	// 노드 ID와 노드 Id 비트 수 설정
 	nodeID = 1
 	nodeIDBits = uint(10)
 	sf = util.NewSnowflake(nodeID, nodeIDBits)
+	log.Println("init snowflake")
 }
