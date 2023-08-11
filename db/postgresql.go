@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"mocha/config"
 	"sync"
 
 	_ "github.com/lib/pq"
-	"github.com/spf13/viper"
 )
 
 func createTables(db *sql.DB) error {
@@ -61,18 +61,13 @@ func createTables(db *sql.DB) error {
 func ConnectPostgresql(wg *sync.WaitGroup) {
 	defer wg.Done()
 	// 설정 파일을 사용하여 viper 초기화
-	viper.SetConfigFile("config.yaml")
-	if err := viper.ReadInConfig(); err != nil {
-		log.Println("Failed to read config file:", err)
-		return
-	}
 
 	// 설정 정보 가져오기
-	host := viper.GetString("postgres.host")
-	port := viper.GetInt("postgres.port")
-	user := viper.GetString("postgres.user")
-	password := viper.GetString("postgres.password")
-	dbName := viper.GetString("postgres.dbname")
+	host := config.GetString("postgres.host")
+	port := config.GetInt("postgres.port")
+	user := config.GetString("postgres.user")
+	password := config.GetString("postgres.password")
+	dbName := config.GetString("postgres.dbname")
 
 	// 데이터베이스 연결 문자열 생성
 	log.Printf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable\n",
