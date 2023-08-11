@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 
+	"mocha/cache"
 	"mocha/db"
 	pb "mocha/proto/message"
 	"mocha/types"
@@ -62,13 +63,18 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 		}, nil
 	}
 
-	joinedUsers, err := db.GetJoinedUsers(req.ConversationId)
-	if err != nil {
-		log.Printf("GetJoinedUsers error %v\n", err)
-		return &pb.ResponseCreateMessage{
-			Status:       "error",
-			ErrorMessage: err.Error(),
-		}, nil
+	// redis 먼저 조회 후 db 조회
+	joinedUsers, err := cache.GetJoinedUsers(req.ConversationId)
+	if len(joinedUsers) == 0 || err != nil {
+		joinedUsers, err = db.GetJoinedUsers(req.ConversationId)
+		if err != nil {
+			log.Printf("GetJoinedUsers error %v\n", err)
+			return &pb.ResponseCreateMessage{
+				Status:       "error",
+				ErrorMessage: err.Error(),
+			}, nil
+		}
+		cache.SetJoinedUsers(req.ConversationId, joinedUsers)
 	}
 
 	return &pb.ResponseCreateMessage{

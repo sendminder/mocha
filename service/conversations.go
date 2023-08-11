@@ -3,6 +3,7 @@ package service
 import (
 	"encoding/json"
 	"errors"
+	"mocha/cache"
 	"mocha/db"
 	"mocha/types"
 	"net/http"
@@ -109,4 +110,7 @@ func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
+	// redis set
+	cache.SetJoinedUsers(createdConv.Id, cc.JoinedUsers)
 }
