@@ -122,6 +122,19 @@ func (s *MessageServer) DecryptConversation(ctx context.Context, req *pb.Request
 	}, nil
 }
 
+func (s *MessageServer) PushMessage(ctx context.Context, req *pb.RequestPushMessage) (*pb.ResponsePushMessage, error) {
+	log.Printf("DecryptConversation mid=%d receivers=%v\n", req.Message.Id, req.ReceiverUserIds)
+	/* TODO
+	1. sender_id로 발송자 정보 조회
+	2. receiver_ids로 수신자 device 조회
+	3. FCM 페이로드 생성
+	4. reciever_ids의 수신자 device에 FCM 푸시 요청
+	*/
+	return &pb.ResponsePushMessage{
+		Status: "ok",
+	}, nil
+}
+
 func StartGrpc(wg *sync.WaitGroup) {
 	defer wg.Done()
 	listener, err := net.Listen("tcp", ":3100")

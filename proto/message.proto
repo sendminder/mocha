@@ -30,7 +30,7 @@ message RequestDecryptConversation {
 message RequestPushMessage {
   int64 sender_id = 1;
   Message message = 2;
-  repeated int64 receiver_user_ids=3;
+  repeated int64 receiver_user_ids = 3;
 }
 
 message Message {
