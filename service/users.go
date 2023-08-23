@@ -86,3 +86,37 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	json.NewEncoder(w).Encode(map[string]types.User{"user": *createdUser})
 }
+
+func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var lu types.LoginUser
+	err := json.NewDecoder(r.Body).Decode(&lu)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request payload"})
+		return
+	}
+
+	// validator를 사용하여 필수 파라미터 체크
+	validate := validator.New()
+	if err := validate.Struct(lu); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
+		return
+	}
+
+	foundUser, err := db.GetUserByEmail(lu.Email)
+	if foundUser == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated user"})
+		return
+	}
+
+	if foundUser.Password != lu.Password {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid Password"})
+		return
+	}
+
+	json.NewEncoder(w).Encode(map[string]types.User{"user": *foundUser})
+}

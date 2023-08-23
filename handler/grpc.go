@@ -5,6 +5,7 @@ import (
 	"log"
 	"net"
 	"sync"
+	"time"
 
 	"mocha/cache"
 	"mocha/db"
@@ -30,21 +31,15 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 	log.Println("CreateMessage text =", req.Text)
 	msgId := sf.Generate()
 
-	// 새로운 Message 생성
-	newMessage := &pb.Message{
-		Id:             msgId,
-		ConversationId: req.ConversationId,
-		SenderId:       req.SenderId,
-		Text:           req.Text,
-		Animal:         "cat",
-	}
-
+	now := time.Now().UTC().Format(time.RFC3339)
 	dynamoMessage := &types.Message{
 		Id:             msgId,
 		ConversationId: req.ConversationId,
 		SenderID:       req.SenderId,
 		Text:           req.Text,
 		Animal:         "cat",
+		CreatedTime:    now,
+		UpdatedTime:    now,
 	}
 	err := db.CreateMessage(dynamoMessage)
 	if err != nil {
@@ -75,6 +70,17 @@ func (s *MessageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 			}, nil
 		}
 		cache.SetJoinedUsers(req.ConversationId, joinedUsers)
+	}
+
+	// 새로운 Message 생성
+	newMessage := &pb.Message{
+		Id:             msgId,
+		ConversationId: req.ConversationId,
+		SenderId:       req.SenderId,
+		Text:           req.Text,
+		Animal:         "cat",
+		CreatedTime:    now,
+		UpdatedTime:    now,
 	}
 
 	return &pb.ResponseCreateMessage{
@@ -123,7 +129,7 @@ func (s *MessageServer) DecryptConversation(ctx context.Context, req *pb.Request
 }
 
 func (s *MessageServer) PushMessage(ctx context.Context, req *pb.RequestPushMessage) (*pb.ResponsePushMessage, error) {
-	log.Printf("DecryptConversation mid=%d receivers=%v\n", req.Message.Id, req.ReceiverUserIds)
+	log.Printf("PushMessage mid=%d receivers=%v\n", req.Message.Id, req.ReceiverUserIds)
 	/* TODO
 	1. sender_id로 발송자 정보 조회
 	2. receiver_ids로 수신자 device 조회

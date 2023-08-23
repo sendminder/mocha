@@ -22,6 +22,7 @@ func StartRest(wg *sync.WaitGroup) {
 
 	router.HandleFunc("/users/{id}", service.GetUserHandler).Methods("GET")
 	router.HandleFunc("/users", service.CreateUserHandler).Methods("POST")
+	router.HandleFunc("/users/login", service.LoginUserHandler).Methods("POST")
 
 	router.HandleFunc("/devices/{id}", service.GetDeviceHandler).Methods("GET")
 	router.HandleFunc("/devices", service.CreateDeviceHandler).Methods("POST")

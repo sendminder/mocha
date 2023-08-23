@@ -1,5 +1,10 @@
 package types
 
+type LoginUser struct {
+	Password string `json:"password" validate:"required"`
+	Email    string `json:"email" validate:"required"`
+}
+
 type CreateUser struct {
 	Name     string `json:"name,omitempty" validate:"required"`
 	Password string `json:"password" validate:"required"`

@@ -5,7 +5,6 @@ import (
 	"log"
 	"mocha/types"
 	"sync"
-	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -40,19 +39,19 @@ func ConnectDynamo(wg *sync.WaitGroup) {
 	// DynamoDB 서비스 생성
 	svc = dynamodb.New(sess)
 
-	// 삭제할 테이블 이름
-	tableName := "messages"
+	// // 삭제할 테이블 이름
+	// tableName := "messages"
 
-	// 테이블 삭제
-	_, err = svc.DeleteTable(&dynamodb.DeleteTableInput{
-		TableName: aws.String(tableName),
-	})
-	if err != nil {
-		log.Println("Failed to delete table:", err)
-		return
-	}
+	// // 테이블 삭제
+	// _, err = svc.DeleteTable(&dynamodb.DeleteTableInput{
+	// 	TableName: aws.String(tableName),
+	// })
+	// if err != nil {
+	// 	log.Println("Failed to delete table:", err)
+	// 	return
+	// }
 
-	createMessageTable()
+	// createMessageTable()
 }
 
 func createMessageTable() {
@@ -97,9 +96,6 @@ func createMessageTable() {
 }
 
 func CreateMessage(message *types.Message) error {
-	message.CreatedTime = time.Now().UTC().Format(time.RFC3339)
-	message.UpdatedTime = message.CreatedTime
-
 	av, err := dynamodbattribute.MarshalMap(message)
 	if err != nil {
 		return err
