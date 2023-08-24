@@ -1,6 +1,7 @@
 # mocha
 
-meow-meow REST server
+![mocha](mocha.png)
+#### meow-meow REST server
 
 ## export & proto build
 
