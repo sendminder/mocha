@@ -6,6 +6,6 @@ type Message struct {
 	Animal         string `json:"animal"`
 	ConversationId int64  `json:"conversation_id"`
 	SenderID       int64  `json:"sender_id"`
-	CreatedTime    string // Modified to be string type
-	UpdatedTime    string // Modified to be string type
+	CreatedTime    string `json:"created_time"`
+	UpdatedTime    string `json:"updated_time"`
 }
