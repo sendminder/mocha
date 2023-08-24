@@ -4,3 +4,5 @@ postgres:
   user: test
   password: test
   dbname: mocha
+dynamo:
+  reset: true

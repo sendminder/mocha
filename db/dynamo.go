@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	cf "mocha/config"
 	"mocha/types"
 	"sync"
 
@@ -39,19 +40,22 @@ func ConnectDynamo(wg *sync.WaitGroup) {
 	// DynamoDB 서비스 생성
 	svc = dynamodb.New(sess)
 
-	// // 삭제할 테이블 이름
-	// tableName := "messages"
+	resetMessages := cf.GetBool("dynamo.reset")
 
-	// // 테이블 삭제
-	// _, err = svc.DeleteTable(&dynamodb.DeleteTableInput{
-	// 	TableName: aws.String(tableName),
-	// })
-	// if err != nil {
-	// 	log.Println("Failed to delete table:", err)
-	// 	return
-	// }
+	if resetMessages {
+		// 삭제할 테이블 이름
+		tableName := "messages"
 
-	// createMessageTable()
+		// 테이블 삭제
+		_, err = svc.DeleteTable(&dynamodb.DeleteTableInput{
+			TableName: aws.String(tableName),
+		})
+		if err != nil {
+			log.Println("Failed to delete table:", err)
+			return
+		}
+		createMessageTable()
+	}
 }
 
 func createMessageTable() {

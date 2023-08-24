@@ -26,3 +26,7 @@ func GetString(key string) string {
 func GetInt(key string) int {
 	return viper.GetInt(key)
 }
+
+func GetBool(key string) bool {
+	return viper.GetBool(key)
+}
