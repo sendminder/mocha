@@ -8,14 +8,14 @@ type CreateConversation struct {
 }
 
 type Conversation struct {
-	Id              int64  `gorm:"primaryKey;autoIncrement"`
-	Type            string `gorm:"not null"`
-	Name            string `gorm:"not null"`
-	HostUserId      int64  `gorm:"not null"`
-	LastMessageId   int64
-	LastDecryptedId int64
-	CreatedAt       string
-	UpdatedAt       string
+	Id              int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	Type            string `gorm:"not null" json:"type"`
+	Name            string `gorm:"not null" json:"name"`
+	HostUserId      int64  `gorm:"not null" json:"host_user_id"`
+	LastMessageId   int64  `json:"last_message_id"`
+	LastDecryptedId int64  `json:"last_decrypted_id"`
+	CreatedAt       string `json:"created_at"`
+	UpdatedAt       string `json:"updated_at"`
 }
 
 type ConversationUser struct {

@@ -84,6 +84,54 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// create bot chat
+	/*
+		1. bot user 가져오기 이름 meow
+		2. bot user의 user id로 chat방 만들기
+	*/
+
+	botUser, err := db.GetBotByName("meow")
+	var conv = types.Conversation{
+		Type:            "bot",
+		Name:            "meow-meow",
+		HostUserId:      user.Id,
+		LastMessageId:   0,
+		LastDecryptedId: 0,
+		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
+		UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
+	}
+	createdBotConv, err := db.CreateConversation(&conv)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create bot conversation"})
+		return
+	}
+
+	// conversation user 생성
+	var cuser = types.ConversationUser{
+		ConversationId:    createdBotConv.Id,
+		UserId:            user.Id,
+		LastSeenMessageId: 0,
+	}
+	err = db.CreateConversationUser(&cuser)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
+		return
+	}
+
+	cuser = types.ConversationUser{
+		ConversationId:    createdBotConv.Id,
+		UserId:            botUser.Id,
+		LastSeenMessageId: 0,
+	}
+	err = db.CreateConversationUser(&cuser)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
+		return
+	}
+
 	json.NewEncoder(w).Encode(map[string]types.User{"user": *createdUser})
 }
 

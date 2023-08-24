@@ -32,7 +32,7 @@ func ConnectGorm(wg *sync.WaitGroup) {
 	}
 
 	// 테이블 생성
-	err = dbConnections[0].AutoMigrate(&types.Conversation{}, &types.User{}, &types.ConversationUser{}, &types.Device{})
+	err = dbConnections[0].AutoMigrate(&types.Conversation{}, &types.User{}, &types.ConversationUser{}, &types.Device{}, &types.Bot{})
 	if err != nil {
 		log.Println("Failed to create table:", err)
 		return

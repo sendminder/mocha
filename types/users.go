@@ -22,4 +22,13 @@ type User struct {
 	Gender    string
 	CreatedAt string
 	UpdatedAt string
+	IsBot     bool `gorm:"default:false"`
+}
+
+type Bot struct {
+	Id        int64  `gorm:"primaryKey;autoIncrement"`
+	UserId    int64  `gorm:"not null"`
+	Name      string `gorm:"not null"`
+	CreatedAt string
+	UpdatedAt string
 }

@@ -127,7 +127,7 @@ func GetJoinedUsers(conversationID int64) ([]int64, error) {
 
 	var conversationUsers []types.ConversationUser
 	result := dbConnections[randIdx].
-		Where("conversation_id = ?", conversationID).
+		Where("conversation_id = ? AND is_bot = ?", conversationID, false).
 		Find(&conversationUsers)
 	if result.Error != nil {
 		return nil, result.Error
