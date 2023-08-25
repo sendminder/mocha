@@ -141,6 +141,23 @@ func (s *MessageServer) PushMessage(ctx context.Context, req *pb.RequestPushMess
 	}, nil
 }
 
+func (s *MessageServer) CreateBotMessage(ctx context.Context, req *pb.RequestBotMessage) (*pb.ResponseBotMessage, error) {
+	/* TODO
+	1. OpenAPI 요청
+	2. async로 response 수신
+	3. lilly 로 전달해야하는데.. (Fast-Track like 필요)
+	*/
+
+	go func() {
+		// OpenAPI 요청 비동기로 처리
+		log.Printf("CreateBotMessage u=%d c=%d t=%s\n", req.SenderId, req.ConversationId, req.ConversationType)
+	}()
+
+	return &pb.ResponseBotMessage{
+		Status: "ok",
+	}, nil
+}
+
 func StartGrpc(wg *sync.WaitGroup) {
 	defer wg.Done()
 	listener, err := net.Listen("tcp", ":3100")
