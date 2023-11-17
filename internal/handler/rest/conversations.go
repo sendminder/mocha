@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
-	"mocha/internal/cache"
 	"mocha/internal/types"
 )
 
@@ -117,5 +116,5 @@ func (s *restServer) CreateConversation(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// redis set
-	cache.SetJoinedUsers(createdConv.Id, cc.JoinedUsers)
+	s.cache.SetJoinedUsers(createdConv.Id, cc.JoinedUsers)
 }

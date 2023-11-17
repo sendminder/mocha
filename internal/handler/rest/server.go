@@ -2,6 +2,7 @@ package rest
 
 import (
 	"log/slog"
+	"mocha/internal/cache"
 	"net/http"
 	"sync"
 
@@ -20,8 +21,9 @@ type RestServer interface {
 var _ RestServer = (*restServer)(nil)
 
 type restServer struct {
-	rdb db.RelationalDatabase
-	mdb db.DynamoDatabase
+	rdb   db.RelationalDatabase
+	mdb   db.DynamoDatabase
+	cache cache.RedisCache
 }
 
 func (s *restServer) Start(wg *sync.WaitGroup) {
@@ -49,9 +51,10 @@ func (s *restServer) Start(wg *sync.WaitGroup) {
 	}
 }
 
-func NewRestServer(rdb db.RelationalDatabase, mdb db.DynamoDatabase) RestServer {
+func NewRestServer(rdb db.RelationalDatabase, mdb db.DynamoDatabase, cache cache.RedisCache) RestServer {
 	return &restServer{
-		rdb: rdb,
-		mdb: mdb,
+		rdb:   rdb,
+		mdb:   mdb,
+		cache: cache,
 	}
 }

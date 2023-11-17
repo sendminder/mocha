@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"time"
 
-	"mocha/internal/cache"
 	"mocha/internal/types"
 	pb "mocha/proto/message"
 )
@@ -51,7 +50,7 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 	}
 
 	// redis 먼저 조회 후 db 조회
-	joinedUsers, err := cache.GetJoinedUsers(req.ConversationId)
+	joinedUsers, err := s.cache.GetJoinedUsers(req.ConversationId)
 	if len(joinedUsers) == 0 || err != nil {
 		joinedUsers, err = s.rdb.GetJoinedUsers(req.ConversationId)
 		if err != nil {
@@ -61,7 +60,7 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 				ErrorMessage: err.Error(),
 			}, nil
 		}
-		cache.SetJoinedUsers(req.ConversationId, joinedUsers)
+		s.cache.SetJoinedUsers(req.ConversationId, joinedUsers)
 	}
 
 	// 새로운 Message 생성

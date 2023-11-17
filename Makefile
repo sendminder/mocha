@@ -16,7 +16,7 @@ install-tools:
 .PHONY: build
 ## build: builds the application
 build:
-	CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-w -s" -o bin/${APP}.mocha cmd/server/main.go
+	CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-w -s" -o bin/${APP} cmd/server/main.go
 
 .PHONY: fix-import-order
 ## fix-import-order: fixes import order

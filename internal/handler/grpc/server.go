@@ -3,6 +3,7 @@ package grpc
 import (
 	"log"
 	"log/slog"
+	"mocha/internal/cache"
 	"net"
 	"strconv"
 	"sync"
@@ -28,6 +29,7 @@ type messageServer struct {
 	portStr    string
 	mdb        db.DynamoDatabase
 	rdb        db.RelationalDatabase
+	cache      cache.RedisCache
 }
 
 func (s *messageServer) Start(wg *sync.WaitGroup) {
@@ -44,7 +46,7 @@ func (s *messageServer) Start(wg *sync.WaitGroup) {
 	}
 }
 
-func NewGrpcServer(port int, mdb db.DynamoDatabase, rdb db.RelationalDatabase) MessageGrpcServer {
+func NewGrpcServer(port int, mdb db.DynamoDatabase, rdb db.RelationalDatabase, cache cache.RedisCache) MessageGrpcServer {
 	// TODO 노드 ID와 노드 Id 비트 수 설정
 	nodeID := 1
 	nodeIDBits := uint(10)
@@ -57,5 +59,6 @@ func NewGrpcServer(port int, mdb db.DynamoDatabase, rdb db.RelationalDatabase) M
 		portStr:    portStr,
 		mdb:        mdb,
 		rdb:        rdb,
+		cache:      cache,
 	}
 }

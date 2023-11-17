@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log/slog"
+	cache "mocha/internal/cache"
 	"sync"
 
 	"github.com/spf13/viper"
@@ -30,10 +31,12 @@ func run(ctx context.Context) error {
 
 	rdb := db.NewRelationalDatabase(&wg, 10)
 	mdb := db.NewDynamoDatabse("http://localhost:8001", "us-west-2", "messages")
-	messageServer := grpc.NewGrpcServer(3000, mdb, rdb)
+	cache := cache.NewRedisCache("localhost:26379")
+
+	messageServer := grpc.NewGrpcServer(3000, mdb, rdb, cache)
 	go messageServer.Start(&wg)
 
-	restServer := rest.NewRestServer(rdb, mdb)
+	restServer := rest.NewRestServer(rdb, mdb, cache)
 	go restServer.Start(&wg)
 
 	wg.Wait()
