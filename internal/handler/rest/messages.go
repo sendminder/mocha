@@ -1,18 +1,21 @@
-package service
+package rest
 
 import (
 	"encoding/json"
 	"errors"
-	"mocha/db"
-	"mocha/types"
 	"net/http"
 	"strconv"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+	"mocha/internal/types"
 )
 
-func GetMessages(w http.ResponseWriter, r *http.Request) {
+type MessageRestHandler interface {
+	GetMessages(w http.ResponseWriter, r *http.Request)
+}
+
+func (s *restServer) GetMessages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	conversationId, err := strconv.ParseInt(params["id"], 10, 64)
@@ -23,7 +26,7 @@ func GetMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	messages, err := db.GetMessagesByConversationID(conversationId)
+	messages, err := s.mdb.GetMessagesByConversationID(conversationId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환

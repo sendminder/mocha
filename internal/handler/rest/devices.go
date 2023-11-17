@@ -1,10 +1,8 @@
-package service
+package rest
 
 import (
 	"encoding/json"
 	"errors"
-	"mocha/db"
-	"mocha/types"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,9 +10,15 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+	"mocha/internal/types"
 )
 
-func GetDeviceHandler(w http.ResponseWriter, r *http.Request) {
+type DeviceHandler interface {
+	GetDevice(w http.ResponseWriter, r *http.Request)
+	CreateDevice(w http.ResponseWriter, r *http.Request)
+}
+
+func (s *restServer) GetDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	deviceId, err := strconv.ParseInt(params["id"], 10, 64)
@@ -25,7 +29,7 @@ func GetDeviceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	device, err := db.GetDevice(deviceId)
+	device, err := s.rdb.GetDevice(deviceId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
@@ -42,7 +46,7 @@ func GetDeviceHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]types.Device{"device": *device})
 }
 
-func CreateDeviceHandler(w http.ResponseWriter, r *http.Request) {
+func (s *restServer) CreateDevice(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var cd types.CreateDevice
 	err := json.NewDecoder(r.Body).Decode(&cd)
@@ -60,7 +64,7 @@ func CreateDeviceHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	foundDevice, err := db.GetDeviceByPushToken(cd.PushToken)
+	foundDevice, err := s.rdb.GetDeviceByPushToken(cd.PushToken)
 	if foundDevice != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated device"})
@@ -77,7 +81,7 @@ func CreateDeviceHandler(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
-	createdDevice, err := db.CreateDevice(&device)
+	createdDevice, err := s.rdb.CreateDevice(&device)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create device"})

@@ -5,4 +5,4 @@ postgres:
   password: test
   dbname: mocha
 dynamo:
-  reset: true
+  reset: false

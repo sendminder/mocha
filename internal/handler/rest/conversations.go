@@ -1,21 +1,26 @@
-package service
+package rest
 
 import (
 	"encoding/json"
 	"errors"
-	"mocha/cache"
-	"mocha/db"
-	"mocha/types"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+	"mocha/internal/cache"
+	"mocha/internal/types"
 )
 
+type ConversationHandler interface {
+	GetUserConversations(w http.ResponseWriter, r *http.Request)
+	GetConversation(w http.ResponseWriter, r *http.Request)
+	CreateConversation(w http.ResponseWriter, r *http.Request)
+}
+
 // GetConversationsHandler는 해당 유저의 모든 채팅방을 반환합니다.
-func GetUserConversationsHandler(w http.ResponseWriter, r *http.Request) {
+func (s *restServer) GetUserConversations(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	userId, err := strconv.ParseInt(params["id"], 10, 64)
@@ -26,7 +31,7 @@ func GetUserConversationsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conversations, err := db.GetUserConversations(userId)
+	conversations, err := s.rdb.GetUserConversations(userId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
@@ -44,7 +49,7 @@ func GetUserConversationsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetConversationHandler는 특정 채팅방을 반환합니다.
-func GetConversationHandler(w http.ResponseWriter, r *http.Request) {
+func (s *restServer) GetConversation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	conversationId, err := strconv.ParseInt(params["id"], 10, 64)
@@ -55,7 +60,7 @@ func GetConversationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conversation, err := db.GetConversationByID(conversationId)
+	conversation, err := s.rdb.GetConversationByID(conversationId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
@@ -73,7 +78,7 @@ func GetConversationHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateConversationHandler는 새로운 채팅방을 생성합니다.
-func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
+func (s *restServer) CreateConversation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	var cc types.CreateConversation
 	_ = json.NewDecoder(r.Body).Decode(&cc)
@@ -87,7 +92,7 @@ func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 		UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 	}
-	createdConv, err := db.CreateConversation(&conv)
+	createdConv, err := s.rdb.CreateConversation(&conv)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation"})
@@ -103,7 +108,7 @@ func CreateConversationHandler(w http.ResponseWriter, r *http.Request) {
 			UserId:            value,
 			LastSeenMessageId: 0,
 		}
-		err = db.CreateConversationUser(&cuser)
+		err = s.rdb.CreateConversationUser(&cuser)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})

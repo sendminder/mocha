@@ -1,10 +1,8 @@
-package service
+package rest
 
 import (
 	"encoding/json"
 	"errors"
-	"mocha/db"
-	"mocha/types"
 	"net/http"
 	"strconv"
 	"time"
@@ -12,9 +10,16 @@ import (
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
+	types2 "mocha/internal/types"
 )
 
-func GetUserHandler(w http.ResponseWriter, r *http.Request) {
+type UserHandler interface {
+	GetUser(w http.ResponseWriter, r *http.Request)
+	CreateUser(w http.ResponseWriter, r *http.Request)
+	LoginUser(w http.ResponseWriter, r *http.Request)
+}
+
+func (s *restServer) GetUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	userId, err := strconv.ParseInt(params["id"], 10, 64)
@@ -25,7 +30,7 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := db.GetUser(userId)
+	user, err := s.rdb.GetUser(userId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
@@ -39,12 +44,12 @@ func GetUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.User{"user": *user})
+	json.NewEncoder(w).Encode(map[string]types2.User{"user": *user})
 }
 
-func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
+func (s *restServer) CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var cu types.CreateUser
+	var cu types2.CreateUser
 	err := json.NewDecoder(r.Body).Decode(&cu)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -60,14 +65,14 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	foundUser, err := db.GetUserByEmail(cu.Email)
+	foundUser, err := s.rdb.GetUserByEmail(cu.Email)
 	if foundUser != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated user"})
 		return
 	}
 
-	var user = types.User{
+	var user = types2.User{
 		Name:      cu.Name,
 		Password:  cu.Password,
 		Email:     cu.Email,
@@ -77,7 +82,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
 	}
 
-	createdUser, err := db.CreateUser(&user)
+	createdUser, err := s.rdb.CreateUser(&user)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create user"})
@@ -90,8 +95,8 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		2. bot user의 user id로 chat방 만들기
 	*/
 
-	botUser, err := db.GetBotByName("meow")
-	var conv = types.Conversation{
+	botUser, err := s.rdb.GetBotByName("meow")
+	var conv = types2.Conversation{
 		Type:            "bot",
 		Name:            "meow-meow",
 		HostUserId:      user.Id,
@@ -100,7 +105,7 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 		UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 	}
-	createdBotConv, err := db.CreateConversation(&conv)
+	createdBotConv, err := s.rdb.CreateConversation(&conv)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create bot conversation"})
@@ -108,36 +113,36 @@ func CreateUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// conversation user 생성
-	var cuser = types.ConversationUser{
+	var cuser = types2.ConversationUser{
 		ConversationId:    createdBotConv.Id,
 		UserId:            user.Id,
 		LastSeenMessageId: 0,
 	}
-	err = db.CreateConversationUser(&cuser)
+	err = s.rdb.CreateConversationUser(&cuser)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
 		return
 	}
 
-	cuser = types.ConversationUser{
+	cuser = types2.ConversationUser{
 		ConversationId:    createdBotConv.Id,
 		UserId:            botUser.Id,
 		LastSeenMessageId: 0,
 	}
-	err = db.CreateConversationUser(&cuser)
+	err = s.rdb.CreateConversationUser(&cuser)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.User{"user": *createdUser})
+	json.NewEncoder(w).Encode(map[string]types2.User{"user": *createdUser})
 }
 
-func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+func (s *restServer) LoginUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var lu types.LoginUser
+	var lu types2.LoginUser
 	err := json.NewDecoder(r.Body).Decode(&lu)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -153,7 +158,10 @@ func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	foundUser, err := db.GetUserByEmail(lu.Email)
+	foundUser, err := s.rdb.GetUserByEmail(lu.Email)
+	if s.handleError(w, err) {
+		return
+	}
 	if foundUser == nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated user"})
@@ -166,5 +174,21 @@ func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.User{"user": *foundUser})
+	json.NewEncoder(w).Encode(map[string]types2.User{"user": *foundUser})
+}
+
+func (s *restServer) handleError(w http.ResponseWriter, err error) bool {
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// 레코드를 찾지 못한 경우 404 에러 반환
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"error": "User not found"})
+			return true
+		}
+		// 다른 에러가 발생한 경우 500 에러 반환
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get user"})
+		return true
+	}
+	return false
 }

@@ -6,13 +6,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-func init() {
+func Init() {
 	loadConfig()
 }
 
 func loadConfig() {
 	log.Println("Config Loaded")
-	viper.SetConfigFile("./config/config.yaml")
+	viper.SetConfigFile("config.yaml")
 	if err := viper.ReadInConfig(); err != nil {
 		log.Println("Failed to read config file:", err)
 		return
