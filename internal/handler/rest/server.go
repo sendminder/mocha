@@ -46,7 +46,7 @@ func (s *restServer) Start(wg *sync.WaitGroup) {
 	router.HandleFunc("/devices/{id}", s.GetDevice).Methods("GET")
 	router.HandleFunc("/devices", s.CreateDevice).Methods("POST")
 
-	slog.Info("REST server is listening on port : " + strconv.Itoa(s.port))
+	slog.Info("REST server is listening on port", "port", strconv.Itoa(s.port))
 	err := http.ListenAndServe(":"+strconv.Itoa(s.port), router)
 	if err != nil {
 		return

@@ -6,8 +6,10 @@ import (
 	"net"
 	"strconv"
 	"sync"
+	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 	"mocha/internal/cache"
 	"mocha/internal/db"
 	pb "mocha/proto/message"
@@ -38,9 +40,23 @@ func (s *messageServer) Start(wg *sync.WaitGroup) {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.KeepaliveParams(
+			keepalive.ServerParameters{
+				MaxConnectionAge:      24 * time.Hour,
+				MaxConnectionAgeGrace: 10 * time.Second,
+				Time:                  60 * time.Second,
+				Timeout:               10 * time.Second,
+			},
+		),
+		grpc.KeepaliveEnforcementPolicy(
+			keepalive.EnforcementPolicy{
+				MinTime: 60 * time.Second,
+			},
+		),
+	)
 	pb.RegisterMessageServiceServer(srv, s)
-	slog.Info("gRPC server is listening on port " + s.portStr)
+	slog.Info("gRPC server is listening on port", "port", s.portStr)
 	if err := srv.Serve(listener); err != nil {
 		slog.Error("failed to serve", "error", err)
 	}
