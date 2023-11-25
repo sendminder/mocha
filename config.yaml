@@ -5,10 +5,10 @@ postgres:
   password: test
   dbname: mocha
 dynamo:
-  reset: false
+  reset: true
   host: "http://localhost"
-  port: 8001
-  region: "us-east-1"
+  port: 8008
+  region: "ap-northeast-2"
   table:
     message: "messages"
 mocha:
@@ -16,3 +16,5 @@ mocha:
 cache:
   port: 26379
   host: "localhost"
+rest:
+  port: 3000

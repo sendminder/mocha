@@ -3,6 +3,7 @@ package rest
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 	"sync"
 
 	"github.com/gorilla/mux"
@@ -24,6 +25,7 @@ type restServer struct {
 	rdb   db.RelationalDatabase
 	mdb   db.DynamoDatabase
 	cache cache.RedisCache
+	port  int
 }
 
 func (s *restServer) Start(wg *sync.WaitGroup) {
@@ -44,17 +46,18 @@ func (s *restServer) Start(wg *sync.WaitGroup) {
 	router.HandleFunc("/devices/{id}", s.GetDevice).Methods("GET")
 	router.HandleFunc("/devices", s.CreateDevice).Methods("POST")
 
-	slog.Info("REST server is listening on port 8000...")
-	err := http.ListenAndServe(":8000", router)
+	slog.Info("REST server is listening on port : " + strconv.Itoa(s.port))
+	err := http.ListenAndServe(":"+strconv.Itoa(s.port), router)
 	if err != nil {
 		return
 	}
 }
 
-func NewRestServer(rdb db.RelationalDatabase, mdb db.DynamoDatabase, cache cache.RedisCache) RestServer {
+func NewRestServer(rdb db.RelationalDatabase, mdb db.DynamoDatabase, cache cache.RedisCache, port int) RestServer {
 	return &restServer{
 		rdb:   rdb,
 		mdb:   mdb,
 		cache: cache,
+		port:  port,
 	}
 }

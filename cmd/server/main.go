@@ -38,7 +38,7 @@ func run(ctx context.Context) error {
 	messageServer := grpc.NewGrpcServer(config.GetInt("mocha.port"), mdb, rdb, cache)
 	go messageServer.Start(&wg)
 
-	restServer := rest.NewRestServer(rdb, mdb, cache)
+	restServer := rest.NewRestServer(rdb, mdb, cache, config.GetInt("rest.port"))
 	go restServer.Start(&wg)
 
 	wg.Wait()

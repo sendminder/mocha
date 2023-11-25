@@ -25,8 +25,15 @@ func (s *restServer) GetMessages(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid channel Id"})
 		return
 	}
+	limit, err := strconv.ParseInt(params["limit"], 10, 64)
+	if err != nil {
+		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid limit"})
+		return
+	}
 
-	messages, err := s.mdb.GetMessagesByChannelID(channelId)
+	messages, err := s.mdb.GetMessagesByChannelID(channelId, limit)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환

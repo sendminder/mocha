@@ -12,7 +12,7 @@ import (
 
 type MessageRecorder interface {
 	CreateMessage(message *types.Message) error
-	GetMessagesByChannelID(channelID int64) ([]types.Message, error)
+	GetMessagesByChannelID(channelID int64, limit int64) ([]types.Message, error)
 	GetLastMessageIdByChannelID(channelID int64) (int64, error)
 }
 
@@ -37,7 +37,7 @@ func (m *mdb) CreateMessage(message *types.Message) error {
 	return nil
 }
 
-func (m *mdb) GetMessagesByChannelID(channelID int64) ([]types.Message, error) {
+func (m *mdb) GetMessagesByChannelID(channelID int64, limit int64) ([]types.Message, error) {
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
 		":val": {
 			N: aws.String(fmt.Sprintf("%d", channelID)),
@@ -48,6 +48,7 @@ func (m *mdb) GetMessagesByChannelID(channelID int64) ([]types.Message, error) {
 		TableName:                 aws.String(m.tableName),
 		KeyConditionExpression:    aws.String("channel_id = :val"),
 		ExpressionAttributeValues: expressionAttributeValues,
+		Limit:                     aws.Int64(limit),
 	}
 
 	result, err := m.svc.Query(queryInput)
