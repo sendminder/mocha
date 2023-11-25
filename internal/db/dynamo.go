@@ -54,7 +54,6 @@ func NewDynamoDatabse(host string, region string, tableName string) DynamoDataba
 		})
 		if err != nil {
 			log.Println("Failed to delete table:", err)
-			return nil
 		}
 		createMessageTable(tableName, svc)
 	}
@@ -65,7 +64,7 @@ func createMessageTable(tableName string, svc *dynamodb.DynamoDB) {
 	// 테이블 생성 요청
 	// 테이블 생성 요청
 	input := &dynamodb.CreateTableInput{
-		TableName: aws.String("messages"),
+		TableName: aws.String(tableName),
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
 				AttributeName: aws.String("conversation_id"), // 파티션 키

@@ -39,7 +39,7 @@ func (s *messageServer) Start(wg *sync.WaitGroup) {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	srv := grpc.NewServer()
-	pb.RegisterMessageServiceServer(srv, &messageServer{})
+	pb.RegisterMessageServiceServer(srv, s)
 	slog.Info("gRPC server is listening on port " + s.portStr)
 	if err := srv.Serve(listener); err != nil {
 		slog.Error("failed to serve", "error", err)

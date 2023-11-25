@@ -140,7 +140,7 @@ func (db *rdb) GetJoinedUsers(conversationID int64) ([]int64, error) {
 
 	var conversationUsers []types.ConversationUser
 	result := db.con[randIdx].
-		Where("conversation_id = ? AND is_bot = ?", conversationID, false).
+		Where("conversation_id = ?", conversationID).
 		Find(&conversationUsers)
 	if result.Error != nil {
 		return nil, result.Error
