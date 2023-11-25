@@ -23,7 +23,7 @@ func (s *restServer) GetDevice(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	deviceId, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
-		// conversationIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
+		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid device Id"})
 		return

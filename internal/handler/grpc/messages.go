@@ -13,7 +13,7 @@ import (
 type MessageHandler interface {
 	CreateMessage(ctx context.Context, req *pb.RequestCreateMessage) (*pb.ResponseCreateMessage, error)
 	ReadMessage(ctx context.Context, req *pb.RequestReadMessage) (*pb.ResponseReadMessage, error)
-	DecryptConversation(ctx context.Context, req *pb.RequestDecryptConversation) (*pb.ResponseDecryptConversation, error)
+	DecryptChannel(ctx context.Context, req *pb.RequestDecryptChannel) (*pb.ResponseDecryptChannel, error)
 	PushMessage(ctx context.Context, req *pb.RequestPushMessage) (*pb.ResponsePushMessage, error)
 	CreateBotMessage(ctx context.Context, req *pb.RequestBotMessage) (*pb.ResponseBotMessage, error)
 }
@@ -24,13 +24,13 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 
 	now := time.Now().UTC().Format(time.RFC3339)
 	dynamoMessage := &types.Message{
-		Id:             msgId,
-		ConversationId: req.ConversationId,
-		SenderID:       req.SenderId,
-		Text:           req.Text,
-		Animal:         "cat",
-		CreatedTime:    now,
-		UpdatedTime:    now,
+		Id:          msgId,
+		ChannelId:   req.ChannelId,
+		SenderID:    req.SenderId,
+		Text:        req.Text,
+		Animal:      "cat",
+		CreatedTime: now,
+		UpdatedTime: now,
 	}
 	err := s.mdb.CreateMessage(dynamoMessage)
 	if err != nil {
@@ -40,7 +40,7 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 			ErrorMessage: err.Error(),
 		}, nil
 	}
-	err = s.rdb.SetLastSeenMessageId(req.SenderId, req.ConversationId, msgId)
+	err = s.rdb.SetLastSeenMessageId(req.SenderId, req.ChannelId, msgId)
 	if err != nil {
 		slog.Error("SetLastSeenMessageId", "error", err)
 		return &pb.ResponseCreateMessage{
@@ -50,9 +50,9 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 	}
 
 	// redis 먼저 조회 후 db 조회
-	joinedUsers, err := s.cache.GetJoinedUsers(req.ConversationId)
+	joinedUsers, err := s.cache.GetJoinedUsers(req.ChannelId)
 	if len(joinedUsers) == 0 || err != nil {
-		joinedUsers, err = s.rdb.GetJoinedUsers(req.ConversationId)
+		joinedUsers, err = s.rdb.GetJoinedUsers(req.ChannelId)
 		if err != nil {
 			slog.Error("GetJoinedUsers", "error", err)
 			return &pb.ResponseCreateMessage{
@@ -60,18 +60,18 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 				ErrorMessage: err.Error(),
 			}, nil
 		}
-		s.cache.SetJoinedUsers(req.ConversationId, joinedUsers)
+		s.cache.SetJoinedUsers(req.ChannelId, joinedUsers)
 	}
 
 	// 새로운 Message 생성
 	newMessage := &pb.Message{
-		Id:             msgId,
-		ConversationId: req.ConversationId,
-		SenderId:       req.SenderId,
-		Text:           req.Text,
-		Animal:         "cat",
-		CreatedTime:    now,
-		UpdatedTime:    now,
+		Id:          msgId,
+		ChannelId:   req.ChannelId,
+		SenderId:    req.SenderId,
+		Text:        req.Text,
+		Animal:      "cat",
+		CreatedTime: now,
+		UpdatedTime: now,
 	}
 
 	return &pb.ResponseCreateMessage{
@@ -82,8 +82,8 @@ func (s *messageServer) CreateMessage(ctx context.Context, req *pb.RequestCreate
 }
 
 func (s *messageServer) ReadMessage(ctx context.Context, req *pb.RequestReadMessage) (*pb.ResponseReadMessage, error) {
-	slog.Info("ReadMessage", "u", req.UserId, "c", req.ConversationId, "m", req.MessageId)
-	err := s.rdb.SetLastSeenMessageId(req.UserId, req.ConversationId, req.MessageId)
+	slog.Info("ReadMessage", "u", req.UserId, "c", req.ChannelId, "m", req.MessageId)
+	err := s.rdb.SetLastSeenMessageId(req.UserId, req.ChannelId, req.MessageId)
 	if err != nil {
 		log.Printf("read message error %v\n", err)
 		return &pb.ResponseReadMessage{
@@ -96,25 +96,25 @@ func (s *messageServer) ReadMessage(ctx context.Context, req *pb.RequestReadMess
 	}, nil
 }
 
-func (s *messageServer) DecryptConversation(ctx context.Context, req *pb.RequestDecryptConversation) (*pb.ResponseDecryptConversation, error) {
-	slog.Info("DecryptConversation", "c", req.ConversationId)
-	lastMessageId, err := s.mdb.GetLastMessageIdByConversationID(req.ConversationId)
+func (s *messageServer) DecryptChannel(ctx context.Context, req *pb.RequestDecryptChannel) (*pb.ResponseDecryptChannel, error) {
+	slog.Info("DecryptChannel", "c", req.ChannelId)
+	lastMessageId, err := s.mdb.GetLastMessageIdByChannelID(req.ChannelId)
 	if err != nil {
-		log.Printf("decrypt conversation error %v\n", err)
-		return &pb.ResponseDecryptConversation{
+		log.Printf("decrypt channel error %v\n", err)
+		return &pb.ResponseDecryptChannel{
 			Status:       "error",
 			ErrorMessage: err.Error(),
 		}, nil
 	}
-	err = s.rdb.SetLastDecryptMessageId(req.ConversationId, lastMessageId)
+	err = s.rdb.SetLastDecryptMessageId(req.ChannelId, lastMessageId)
 	if err != nil {
-		log.Printf("decrypt conversation error %v\n", err)
-		return &pb.ResponseDecryptConversation{
+		log.Printf("decrypt channel error %v\n", err)
+		return &pb.ResponseDecryptChannel{
 			Status:       "error",
 			ErrorMessage: err.Error(),
 		}, nil
 	}
-	return &pb.ResponseDecryptConversation{
+	return &pb.ResponseDecryptChannel{
 		Status: "ok",
 	}, nil
 }
@@ -133,7 +133,7 @@ func (s *messageServer) PushMessage(ctx context.Context, req *pb.RequestPushMess
 }
 
 func (s *messageServer) CreateBotMessage(ctx context.Context, req *pb.RequestBotMessage) (*pb.ResponseBotMessage, error) {
-	slog.Info("CreateBotMessage", "u", req.SenderId, "c", req.ConversationId, "t", req.ConversationType)
+	slog.Info("CreateBotMessage", "u", req.SenderId, "c", req.ChannelId, "t", req.ChannelType)
 	/* TODO
 	1. OpenAPI 요청
 	2. async로 response 수신
@@ -142,7 +142,7 @@ func (s *messageServer) CreateBotMessage(ctx context.Context, req *pb.RequestBot
 
 	go func() {
 		// OpenAPI 요청 비동기로 처리
-		slog.Info("API CreateBotMessage", "u", req.SenderId, "c", req.ConversationId, "t", req.ConversationType)
+		slog.Info("API CreateBotMessage", "u", req.SenderId, "c", req.ChannelId, "t", req.ChannelType)
 	}()
 
 	return &pb.ResponseBotMessage{

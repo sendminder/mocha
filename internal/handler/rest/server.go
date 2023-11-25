@@ -11,7 +11,7 @@ import (
 )
 
 type RestServer interface {
-	ConversationHandler
+	ChannelHandler
 	UserHandler
 	MessageRestHandler
 	DeviceHandler
@@ -31,11 +31,11 @@ func (s *restServer) Start(wg *sync.WaitGroup) {
 	router := mux.NewRouter()
 
 	// RESTful API 핸들러 등록
-	router.HandleFunc("/user_conversations/{id}", s.GetUserConversations).Methods("GET")
-	router.HandleFunc("/conversations/{id}", s.GetConversation).Methods("GET")
-	router.HandleFunc("/conversations", s.CreateConversation).Methods("POST")
+	router.HandleFunc("/user_channels/{id}", s.GetUserChannels).Methods("GET")
+	router.HandleFunc("/channels/{id}", s.GetChannel).Methods("GET")
+	router.HandleFunc("/channels", s.CreateChannel).Methods("POST")
 
-	router.HandleFunc("/conversations/{id}/messages", s.GetMessages).Methods("GET")
+	router.HandleFunc("/channels/{id}/messages", s.GetMessages).Methods("GET")
 
 	router.HandleFunc("/users/{id}", s.GetUser).Methods("GET")
 	router.HandleFunc("/users", s.CreateUser).Methods("POST")

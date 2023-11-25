@@ -12,8 +12,8 @@ import (
 
 type MessageRecorder interface {
 	CreateMessage(message *types.Message) error
-	GetMessagesByConversationID(conversationID int64) ([]types.Message, error)
-	GetLastMessageIdByConversationID(conversationID int64) (int64, error)
+	GetMessagesByChannelID(channelID int64) ([]types.Message, error)
+	GetLastMessageIdByChannelID(channelID int64) (int64, error)
 }
 
 func (m *mdb) CreateMessage(message *types.Message) error {
@@ -37,16 +37,16 @@ func (m *mdb) CreateMessage(message *types.Message) error {
 	return nil
 }
 
-func (m *mdb) GetMessagesByConversationID(conversationID int64) ([]types.Message, error) {
+func (m *mdb) GetMessagesByChannelID(channelID int64) ([]types.Message, error) {
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
 		":val": {
-			N: aws.String(fmt.Sprintf("%d", conversationID)),
+			N: aws.String(fmt.Sprintf("%d", channelID)),
 		},
 	}
 
 	queryInput := &dynamodb.QueryInput{
 		TableName:                 aws.String(m.tableName),
-		KeyConditionExpression:    aws.String("conversation_id = :val"),
+		KeyConditionExpression:    aws.String("channel_id = :val"),
 		ExpressionAttributeValues: expressionAttributeValues,
 	}
 
@@ -64,16 +64,16 @@ func (m *mdb) GetMessagesByConversationID(conversationID int64) ([]types.Message
 	return messages, nil
 }
 
-func (m *mdb) GetLastMessageIdByConversationID(conversationID int64) (int64, error) {
+func (m *mdb) GetLastMessageIdByChannelID(channelID int64) (int64, error) {
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
 		":val": {
-			N: aws.String(fmt.Sprintf("%d", conversationID)),
+			N: aws.String(fmt.Sprintf("%d", channelID)),
 		},
 	}
 
 	queryInput := &dynamodb.QueryInput{
 		TableName:                 aws.String(m.tableName),
-		KeyConditionExpression:    aws.String("conversation_id = :val"),
+		KeyConditionExpression:    aws.String("channel_id = :val"),
 		ExpressionAttributeValues: expressionAttributeValues,
 		ScanIndexForward:          aws.Bool(false), // Sort in descending order (latest first)
 		Limit:                     aws.Int64(1),    // Get only the latest message
@@ -85,7 +85,7 @@ func (m *mdb) GetLastMessageIdByConversationID(conversationID int64) (int64, err
 	}
 
 	if len(result.Items) == 0 {
-		// No messages found for the given conversation ID
+		// No messages found for the given channel ID
 		return 0, nil
 	}
 

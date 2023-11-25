@@ -10,8 +10,8 @@ import (
 )
 
 type RedisCache interface {
-	SetJoinedUsers(convId int64, userIds []int64) error
-	GetJoinedUsers(convId int64) ([]int64, error)
+	SetJoinedUsers(channelId int64, userIds []int64) error
+	GetJoinedUsers(channelId int64) ([]int64, error)
 }
 
 var _ RedisCache = (*redisCache)(nil)
@@ -39,14 +39,14 @@ func NewRedisCache(host string) RedisCache {
 	}
 }
 
-func (r *redisCache) SetJoinedUsers(convId int64, userIds []int64) error {
+func (r *redisCache) SetJoinedUsers(channelId int64, userIds []int64) error {
 	// userIds를 문자열로 변환하여 Redis에 저장
 	userIdsStr := make([]string, len(userIds))
 	for i, id := range userIds {
 		userIdsStr[i] = fmt.Sprintf("%d", id)
 	}
 
-	key := fmt.Sprintf("conversation:%d:users", convId)
+	key := fmt.Sprintf("channel:%d:users", channelId)
 	err := r.client.SAdd(context.Background(), key, userIdsStr).Err()
 	if err != nil {
 		return err
@@ -55,8 +55,8 @@ func (r *redisCache) SetJoinedUsers(convId int64, userIds []int64) error {
 	return nil
 }
 
-func (r *redisCache) GetJoinedUsers(convId int64) ([]int64, error) {
-	key := fmt.Sprintf("conversation:%d:users", convId)
+func (r *redisCache) GetJoinedUsers(channelId int64) ([]int64, error) {
+	key := fmt.Sprintf("channel:%d:users", channelId)
 	userIdsStr, err := r.client.SMembers(context.Background(), key).Result()
 	if err != nil {
 		return nil, err

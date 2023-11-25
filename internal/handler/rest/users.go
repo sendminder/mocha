@@ -24,7 +24,7 @@ func (s *restServer) GetUser(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	userId, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
-		// conversationIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
+		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid user Id"})
 		return
@@ -96,7 +96,7 @@ func (s *restServer) CreateUser(w http.ResponseWriter, r *http.Request) {
 	*/
 
 	botUser, err := s.rdb.GetBotByName("meow")
-	var conv = types2.Conversation{
+	var channel = types2.Channel{
 		Type:            "bot",
 		Name:            "meow-meow",
 		HostUserId:      user.Id,
@@ -105,35 +105,35 @@ func (s *restServer) CreateUser(w http.ResponseWriter, r *http.Request) {
 		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 		UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 	}
-	createdBotConv, err := s.rdb.CreateConversation(&conv)
+	createdBotChannel, err := s.rdb.CreateChannel(&channel)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create bot conversation"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create bot channel"})
 		return
 	}
 
-	// conversation user 생성
-	var cuser = types2.ConversationUser{
-		ConversationId:    createdBotConv.Id,
+	// channel user 생성
+	var cuser = types2.ChannelUser{
+		ChannelId:         createdBotChannel.Id,
 		UserId:            user.Id,
 		LastSeenMessageId: 0,
 	}
-	err = s.rdb.CreateConversationUser(&cuser)
+	err = s.rdb.CreateChannelUser(&cuser)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create channel_user"})
 		return
 	}
 
-	cuser = types2.ConversationUser{
-		ConversationId:    createdBotConv.Id,
+	cuser = types2.ChannelUser{
+		ChannelId:         createdBotChannel.Id,
 		UserId:            botUser.Id,
 		LastSeenMessageId: 0,
 	}
-	err = s.rdb.CreateConversationUser(&cuser)
+	err = s.rdb.CreateChannelUser(&cuser)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create channel_user"})
 		return
 	}
 

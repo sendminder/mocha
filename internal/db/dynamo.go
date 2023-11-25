@@ -67,7 +67,7 @@ func createMessageTable(tableName string, svc *dynamodb.DynamoDB) {
 		TableName: aws.String(tableName),
 		KeySchema: []*dynamodb.KeySchemaElement{
 			{
-				AttributeName: aws.String("conversation_id"), // 파티션 키
+				AttributeName: aws.String("channel_id"), // 파티션 키
 				KeyType:       aws.String("HASH"),
 			},
 			{
@@ -77,7 +77,7 @@ func createMessageTable(tableName string, svc *dynamodb.DynamoDB) {
 		},
 		AttributeDefinitions: []*dynamodb.AttributeDefinition{
 			{
-				AttributeName: aws.String("conversation_id"),
+				AttributeName: aws.String("channel_id"),
 				AttributeType: aws.String("N"),
 			},
 			{

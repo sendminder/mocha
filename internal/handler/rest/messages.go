@@ -18,15 +18,15 @@ type MessageRestHandler interface {
 func (s *restServer) GetMessages(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	conversationId, err := strconv.ParseInt(params["id"], 10, 64)
+	channelId, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
-		// conversationIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
+		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid conversation Id"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid channel Id"})
 		return
 	}
 
-	messages, err := s.mdb.GetMessagesByConversationID(conversationId)
+	messages, err := s.mdb.GetMessagesByChannelID(channelId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환

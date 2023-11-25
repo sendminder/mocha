@@ -12,77 +12,77 @@ import (
 	"mocha/internal/types"
 )
 
-type ConversationHandler interface {
-	GetUserConversations(w http.ResponseWriter, r *http.Request)
-	GetConversation(w http.ResponseWriter, r *http.Request)
-	CreateConversation(w http.ResponseWriter, r *http.Request)
+type ChannelHandler interface {
+	GetUserChannels(w http.ResponseWriter, r *http.Request)
+	GetChannel(w http.ResponseWriter, r *http.Request)
+	CreateChannel(w http.ResponseWriter, r *http.Request)
 }
 
-// GetConversationsHandler는 해당 유저의 모든 채팅방을 반환합니다.
-func (s *restServer) GetUserConversations(w http.ResponseWriter, r *http.Request) {
+// GetChannelsHandler는 해당 유저의 모든 채팅방을 반환합니다.
+func (s *restServer) GetUserChannels(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
 	userId, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
-		// conversationIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
+		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid user Id"})
 		return
 	}
 
-	conversations, err := s.rdb.GetUserConversations(userId)
+	channels, err := s.rdb.GetUserChannels(userId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Conversation not found"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "Channel not found"})
 			return
 		}
 		// 다른 에러가 발생한 경우 500 에러 반환
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get conversation"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get channel"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string][]types.Conversation{"conversations": conversations})
+	json.NewEncoder(w).Encode(map[string][]types.Channel{"channels": channels})
 }
 
-// GetConversationHandler는 특정 채팅방을 반환합니다.
-func (s *restServer) GetConversation(w http.ResponseWriter, r *http.Request) {
+// GetChannelHandler는 특정 채팅방을 반환합니다.
+func (s *restServer) GetChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(r)
-	conversationId, err := strconv.ParseInt(params["id"], 10, 64)
+	channelId, err := strconv.ParseInt(params["id"], 10, 64)
 	if err != nil {
-		// conversationIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
+		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid conversation Id"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid channel Id"})
 		return
 	}
 
-	conversation, err := s.rdb.GetConversationByID(conversationId)
+	channel, err := s.rdb.GetChannelByID(channelId)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// 레코드를 찾지 못한 경우 404 에러 반환
 			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Conversation not found"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "Channel not found"})
 			return
 		}
 		// 다른 에러가 발생한 경우 500 에러 반환
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get conversation"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get channel"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.Conversation{"conversation": *conversation})
+	json.NewEncoder(w).Encode(map[string]types.Channel{"channel": *channel})
 }
 
-// CreateConversationHandler는 새로운 채팅방을 생성합니다.
-func (s *restServer) CreateConversation(w http.ResponseWriter, r *http.Request) {
+// CreateChannelHandler는 새로운 채팅방을 생성합니다.
+func (s *restServer) CreateChannel(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	var cc types.CreateConversation
+	var cc types.CreateChannel
 	_ = json.NewDecoder(r.Body).Decode(&cc)
 
-	var conv = types.Conversation{
+	var channel = types.Channel{
 		Type:            "dm",
 		Name:            cc.Name,
 		HostUserId:      cc.HostUserId,
@@ -91,30 +91,30 @@ func (s *restServer) CreateConversation(w http.ResponseWriter, r *http.Request) 
 		CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 		UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 	}
-	createdConv, err := s.rdb.CreateConversation(&conv)
+	createdChannel, err := s.rdb.CreateChannel(&channel)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation"})
+		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create channel"})
 		return
 	}
 
-	json.NewEncoder(w).Encode(map[string]types.Conversation{"conversation": *createdConv})
+	json.NewEncoder(w).Encode(map[string]types.Channel{"channel": *createdChannel})
 
-	// conversation user 생성
+	// channel user 생성
 	for _, value := range cc.JoinedUsers {
-		var cuser = types.ConversationUser{
-			ConversationId:    createdConv.Id,
+		var cuser = types.ChannelUser{
+			ChannelId:         createdChannel.Id,
 			UserId:            value,
 			LastSeenMessageId: 0,
 		}
-		err = s.rdb.CreateConversationUser(&cuser)
+		err = s.rdb.CreateChannelUser(&cuser)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create conversation_user"})
+			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create channel_user"})
 			return
 		}
 	}
 
 	// redis set
-	s.cache.SetJoinedUsers(createdConv.Id, cc.JoinedUsers)
+	s.cache.SetJoinedUsers(createdChannel.Id, cc.JoinedUsers)
 }

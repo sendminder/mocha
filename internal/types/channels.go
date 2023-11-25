@@ -1,13 +1,13 @@
 package types
 
-// Conversation struct는 채팅방의 데이터 구조를 나타냅니다.
-type CreateConversation struct {
+// Channel struct는 채팅방의 데이터 구조를 나타냅니다.
+type CreateChannel struct {
 	Name        string  `json:"name,omitempty"`
 	HostUserId  int64   `json:"host_user_id"`
 	JoinedUsers []int64 `json:"joined_users"`
 }
 
-type Conversation struct {
+type Channel struct {
 	Id              int64  `gorm:"primaryKey;autoIncrement" json:"id"`
 	Type            string `gorm:"not null" json:"type"`
 	Name            string `gorm:"not null" json:"name"`
@@ -18,8 +18,8 @@ type Conversation struct {
 	UpdatedAt       string `json:"updated_at"`
 }
 
-type ConversationUser struct {
-	ConversationId    int64 `gorm:"primaryKey"`
+type ChannelUser struct {
+	ChannelId         int64 `gorm:"primaryKey"`
 	UserId            int64 `gorm:"primaryKey"`
 	LastSeenMessageId int64
 }
