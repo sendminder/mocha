@@ -1,5 +1,5 @@
 APP?=mocha
-LINT_VERSION = v1.54.2 # .github/workflows/reviewdog.yml의 jobs.golangci-lint.steps[2].with.golangci_lint_version과 맞춰줘야 함.
+LINT_VERSION = v1.54.2
 
 .PHONY: help
 ## help: prints this help message
@@ -36,7 +36,7 @@ format: format-go
 .PHONY: test
 ## test: runs tests
 test: install-tools
-	gotest -p 1 -race -cover -v ./pkg/... ./internal/...
+	gotest -p 1 -race -cover -v ./internal/...
 
 .PHONY: unit-test
 ## unit-test: runs unit tests

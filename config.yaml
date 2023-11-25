@@ -6,3 +6,13 @@ postgres:
   dbname: mocha
 dynamo:
   reset: false
+  host: "http://localhost"
+  port: 8001
+  region: "us-east-1"
+  table:
+    message: "messages"
+mocha:
+  port: 3100
+cache:
+  port: 26379
+  host: "localhost"

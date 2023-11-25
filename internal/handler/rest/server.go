@@ -2,11 +2,11 @@ package rest
 
 import (
 	"log/slog"
-	"mocha/internal/cache"
 	"net/http"
 	"sync"
 
 	"github.com/gorilla/mux"
+	"mocha/internal/cache"
 	"mocha/internal/db"
 )
 
