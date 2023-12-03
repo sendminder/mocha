@@ -14,21 +14,21 @@ type CreateUser struct {
 }
 
 type User struct {
-	Id        int64  `gorm:"primaryKey;autoIncrement"`
-	Name      string `gorm:"not null"`
-	Password  string `gorm:"not null"`
-	Email     string `gorm:"not null"`
-	Age       int
-	Gender    string
-	CreatedAt string
-	UpdatedAt string
-	IsBot     bool `gorm:"default:false"`
+	Id        int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	Name      string `gorm:"not null" json:"name"`
+	Password  string `gorm:"not null" json:"password"`
+	Email     string `gorm:"not null" json:"email"`
+	Age       int    `json:"age"`
+	Gender    string `json:"gender"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
+	IsBot     bool   `gorm:"default:false" json:"is_bot"`
 }
 
 type Bot struct {
-	Id        int64  `gorm:"primaryKey;autoIncrement"`
-	UserId    int64  `gorm:"not null"`
-	Name      string `gorm:"not null"`
-	CreatedAt string
-	UpdatedAt string
+	Id        int64  `gorm:"primaryKey;autoIncrement" json:"id"`
+	UserId    int64  `gorm:"not null" json:"user_id"`
+	Name      string `gorm:"not null" json:"name"`
+	CreatedAt string `json:"created_at"`
+	UpdatedAt string `json:"updated_at"`
 }

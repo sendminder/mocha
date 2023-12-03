@@ -6,7 +6,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	types2 "mocha/internal/types"
+	"mocha/internal/types"
 )
 
 type RelationalDatabase interface {
@@ -44,7 +44,7 @@ func NewRelationalDatabase(wg *sync.WaitGroup, numConnections int) RelationalDat
 	}
 
 	// 테이블 생성
-	err = cons[0].AutoMigrate(&types2.Channel{}, &types2.User{}, &types2.ChannelUser{}, &types2.Device{}, &types2.Bot{})
+	err = cons[0].AutoMigrate(&types.Channel{}, &types.User{}, &types.ChannelUser{}, &types.Device{}, &types.Bot{})
 	if err != nil {
 		slog.Error("Failed to create table", "error", err)
 		return nil

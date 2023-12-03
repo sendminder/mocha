@@ -33,12 +33,12 @@ func run(ctx context.Context) error {
 	rdb := db.NewRelationalDatabase(&wg, 10)
 	mdb := db.NewDynamoDatabse(config.GetString("dynamo.host")+":"+strconv.Itoa(config.GetInt("dynamo.port")),
 		config.GetString("dynamo.region"), config.GetString("dynamo.table.message"))
-	cache := cache.NewRedisCache(config.GetString("cache.host") + ":" + strconv.Itoa(config.GetInt("cache.port")))
+	redisCache := cache.NewRedisCache(config.GetString("cache.host") + ":" + strconv.Itoa(config.GetInt("cache.port")))
 
-	messageServer := grpc.NewGrpcServer(config.GetInt("mocha.port"), mdb, rdb, cache)
+	messageServer := grpc.NewGrpcServer(config.GetInt("mocha.port"), mdb, rdb, redisCache)
 	go messageServer.Start(&wg)
 
-	restServer := rest.NewRestServer(rdb, mdb, cache, config.GetInt("rest.port"))
+	restServer := rest.NewRestServer(rdb, mdb, redisCache, config.GetInt("rest.port"))
 	go restServer.Start(&wg)
 
 	wg.Wait()

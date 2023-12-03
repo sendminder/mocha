@@ -2,11 +2,10 @@ package rest
 
 import (
 	"log/slog"
-	"net/http"
 	"strconv"
 	"sync"
 
-	"github.com/gorilla/mux"
+	"github.com/gofiber/fiber/v2"
 	"mocha/internal/cache"
 	"mocha/internal/db"
 )
@@ -30,24 +29,24 @@ type restServer struct {
 
 func (s *restServer) Start(wg *sync.WaitGroup) {
 	defer wg.Done()
-	router := mux.NewRouter()
 
-	// RESTful API 핸들러 등록
-	router.HandleFunc("/user_channels/{id}", s.GetUserChannels).Methods("GET")
-	router.HandleFunc("/channels/{id}", s.GetChannel).Methods("GET")
-	router.HandleFunc("/channels", s.CreateChannel).Methods("POST")
+	app := fiber.New()
 
-	router.HandleFunc("/channels/{id}/messages", s.GetMessages).Methods("GET")
+	app.Get("/user_channels/:id", s.GetUserChannels())
+	app.Get("/channels/:id", s.GetChannel())
+	app.Post("/channels", s.CreateChannel())
 
-	router.HandleFunc("/users/{id}", s.GetUser).Methods("GET")
-	router.HandleFunc("/users", s.CreateUser).Methods("POST")
-	router.HandleFunc("/users/login", s.LoginUser).Methods("POST")
+	app.Get("/channels/:id/messages", s.GetMessages())
 
-	router.HandleFunc("/devices/{id}", s.GetDevice).Methods("GET")
-	router.HandleFunc("/devices", s.CreateDevice).Methods("POST")
+	app.Get("/users/:id", s.GetUser())
+	app.Post("/users", s.CreateUser())
+	app.Post("/users/login", s.LoginUser())
+
+	app.Get("/devices/:id", s.GetDevice())
+	app.Post("/devices", s.CreateDevice())
 
 	slog.Info("REST server is listening on port", "port", strconv.Itoa(s.port))
-	err := http.ListenAndServe(":"+strconv.Itoa(s.port), router)
+	err := app.Listen(":" + strconv.Itoa(s.port))
 	if err != nil {
 		return
 	}

@@ -1,92 +1,71 @@
 package rest
 
 import (
-	"encoding/json"
-	"errors"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/go-playground/validator"
-	"github.com/gorilla/mux"
-	"gorm.io/gorm"
+	"github.com/gofiber/fiber/v2"
 	"mocha/internal/types"
 )
 
 type DeviceHandler interface {
-	GetDevice(w http.ResponseWriter, r *http.Request)
-	CreateDevice(w http.ResponseWriter, r *http.Request)
+	GetDevice() func(*fiber.Ctx) error
+	CreateDevice() func(*fiber.Ctx) error
 }
 
-func (s *restServer) GetDevice(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r)
-	deviceId, err := strconv.ParseInt(params["id"], 10, 64)
-	if err != nil {
-		// channelIDStr이 올바른 int64로 변환되지 않은 경우 에러 처리
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid device Id"})
-		return
-	}
-
-	device, err := s.rdb.GetDevice(deviceId)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			// 레코드를 찾지 못한 경우 404 에러 반환
-			w.WriteHeader(http.StatusNotFound)
-			json.NewEncoder(w).Encode(map[string]string{"error": "Device not found"})
-			return
+func (s *restServer) GetDevice() func(*fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "application/json")
+		deviceId, err := strconv.ParseInt(c.Params("id"), 10, 64)
+		if err != nil {
+			// deviceId가 올바른 int64로 변환되지 않은 경우 에러 처리
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid device Id"})
 		}
-		// 다른 에러가 발생한 경우 500 에러 반환
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to get device"})
-		return
-	}
 
-	json.NewEncoder(w).Encode(map[string]types.Device{"device": *device})
+		device, err := s.rdb.GetDevice(deviceId)
+		if err != nil {
+			return s.handleError(c, err)
+		}
+		return c.JSON(map[string]types.Device{"device": *device})
+	}
 }
 
-func (s *restServer) CreateDevice(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	var cd types.CreateDevice
-	err := json.NewDecoder(r.Body).Decode(&cd)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Invalid request payload"})
-		return
-	}
+func (s *restServer) CreateDevice() func(*fiber.Ctx) error {
+	return func(c *fiber.Ctx) error {
+		c.Set("Content-Type", "application/json")
+		var cd types.CreateDevice
+		err := c.BodyParser(&cd)
+		if err != nil {
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid request payload"})
+		}
 
-	// validator를 사용하여 필수 파라미터 체크
-	validate := validator.New()
-	if err := validate.Struct(cd); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": err.Error()})
-		return
-	}
+		// validator를 사용하여 필수 파라미터 체크
+		validate := validator.New()
+		if err := validate.Struct(cd); err != nil {
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": err.Error()})
+		}
 
-	foundDevice, err := s.rdb.GetDeviceByPushToken(cd.PushToken)
-	if foundDevice != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Duplicated device"})
-		return
-	}
+		foundDevice, err := s.rdb.GetDeviceByPushToken(cd.PushToken)
+		if foundDevice != nil {
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Duplicated device"})
+		}
 
-	var device = types.Device{
-		UserId:    cd.UserId,
-		PushToken: cd.PushToken,
-		Platform:  cd.Platform,
-		Version:   cd.Version,
-		Activated: true,
-		CreatedAt: time.Now().UTC().Format(time.RFC3339),
-		UpdatedAt: time.Now().UTC().Format(time.RFC3339),
-	}
+		var device = types.Device{
+			UserId:    cd.UserId,
+			PushToken: cd.PushToken,
+			Platform:  cd.Platform,
+			Version:   cd.Version,
+			Activated: true,
+			CreatedAt: time.Now().UTC().Format(time.RFC3339),
+			UpdatedAt: time.Now().UTC().Format(time.RFC3339),
+		}
 
-	createdDevice, err := s.rdb.CreateDevice(&device)
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Failed to create device"})
-		return
+		createdDevice, err := s.rdb.CreateDevice(&device)
+		if err != nil {
+			return s.handleError(c, err)
+		}
+		return c.JSON(map[string]types.Device{"device": *createdDevice})
 	}
-
-	json.NewEncoder(w).Encode(map[string]types.Device{"device": *createdDevice})
 }
