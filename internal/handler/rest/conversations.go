@@ -69,7 +69,10 @@ func (s *server) CreateChannel() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
 		var cc types.CreateChannel
-		_ = c.BodyParser(&cc)
+		err := c.BodyParser(&cc)
+		if err != nil {
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid request payload"})
+		}
 
 		var channel = types.Channel{
 			Type:            "dm",
