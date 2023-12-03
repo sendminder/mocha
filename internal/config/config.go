@@ -1,7 +1,7 @@
 package config
 
 import (
-	"log"
+	"log/slog"
 
 	"github.com/spf13/viper"
 )
@@ -11,10 +11,10 @@ func Init() {
 }
 
 func loadConfig() {
-	log.Println("Config Loaded")
+	slog.Info("Config Loaded")
 	viper.SetConfigFile("config.yaml")
 	if err := viper.ReadInConfig(); err != nil {
-		log.Println("Failed to read config file:", err)
+		slog.Error("Failed to read config file", "err", err)
 		return
 	}
 }

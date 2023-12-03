@@ -1,7 +1,6 @@
 package db
 
 import (
-	"log"
 	"log/slog"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -53,7 +52,7 @@ func NewDynamoDatabse(host string, region string, tableName string) DynamoDataba
 			TableName: aws.String(tableName),
 		})
 		if err != nil {
-			log.Println("Failed to delete table:", err)
+			slog.Error("Failed to delete table", "error", err)
 		}
 		createMessageTable(tableName, svc)
 	}

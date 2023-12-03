@@ -18,16 +18,16 @@ type UserHandler interface {
 	LoginUser() func(*fiber.Ctx) error
 }
 
-func (s *restServer) GetUser() func(*fiber.Ctx) error {
+func (s *server) GetUser() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
-		userId, err := strconv.ParseInt(c.Params("id"), 10, 64)
+		userID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
-			// userId가 올바른 int64로 변환되지 않은 경우 에러 처리
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid user Id"})
+			// userID가 올바른 int64로 변환되지 않은 경우 에러 처리
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid user ID"})
 		}
 
-		user, err := s.rdb.GetUser(userId)
+		user, err := s.rdb.GetUser(userID)
 		if err != nil {
 			return s.handleError(c, err)
 		}
@@ -35,7 +35,7 @@ func (s *restServer) GetUser() func(*fiber.Ctx) error {
 	}
 }
 
-func (s *restServer) CreateUser() func(*fiber.Ctx) error {
+func (s *server) CreateUser() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
 		var cu types.CreateUser
@@ -80,12 +80,15 @@ func (s *restServer) CreateUser() func(*fiber.Ctx) error {
 		*/
 
 		botUser, err := s.rdb.GetBotByName("meow")
+		if err != nil {
+			return s.handleError(c, err)
+		}
 		var channel = types.Channel{
 			Type:            "bot",
 			Name:            "meow-meow",
-			HostUserId:      user.Id,
-			LastMessageId:   0,
-			LastDecryptedId: 0,
+			HostUserID:      user.ID,
+			LastMessageID:   0,
+			LastDecryptedID: 0,
 			CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 			UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 		}
@@ -96,9 +99,9 @@ func (s *restServer) CreateUser() func(*fiber.Ctx) error {
 
 		// channel user 생성
 		var cuser = types.ChannelUser{
-			ChannelId:         createdBotChannel.Id,
-			UserId:            user.Id,
-			LastSeenMessageId: 0,
+			ChannelID:         createdBotChannel.ID,
+			UserID:            user.ID,
+			LastSeenMessageID: 0,
 		}
 		err = s.rdb.CreateChannelUser(&cuser)
 		if err != nil {
@@ -106,9 +109,9 @@ func (s *restServer) CreateUser() func(*fiber.Ctx) error {
 		}
 
 		cuser = types.ChannelUser{
-			ChannelId:         createdBotChannel.Id,
-			UserId:            botUser.Id,
-			LastSeenMessageId: 0,
+			ChannelID:         createdBotChannel.ID,
+			UserID:            botUser.ID,
+			LastSeenMessageID: 0,
 		}
 		err = s.rdb.CreateChannelUser(&cuser)
 		if err != nil {
@@ -118,7 +121,7 @@ func (s *restServer) CreateUser() func(*fiber.Ctx) error {
 	}
 }
 
-func (s *restServer) LoginUser() func(*fiber.Ctx) error {
+func (s *server) LoginUser() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
 		var lu types.LoginUser
@@ -148,7 +151,7 @@ func (s *restServer) LoginUser() func(*fiber.Ctx) error {
 	}
 }
 
-func (s *restServer) handleError(c *fiber.Ctx, err error) error {
+func (s *server) handleError(c *fiber.Ctx, err error) error {
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		// 레코드를 찾지 못한 경우 404 에러 반환
 		return c.Status(http.StatusNotFound).JSON(map[string]string{"error": "User not found"})

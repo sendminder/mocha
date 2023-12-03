@@ -18,16 +18,16 @@ type ChannelHandler interface {
 }
 
 // GetChannelsHandler는 해당 유저의 모든 채팅방을 반환합니다.
-func (s *restServer) GetUserChannels() func(*fiber.Ctx) error {
+func (s *server) GetUserChannels() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
-		userId, err := strconv.ParseInt(c.Params("id"), 10, 64)
+		userID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
-			// userId가 올바른 int64로 변환되지 않은 경우 에러 처리
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid user Id"})
+			// userID가 올바른 int64로 변환되지 않은 경우 에러 처리
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid user ID"})
 		}
 
-		channels, err := s.rdb.GetUserChannels(userId)
+		channels, err := s.rdb.GetUserChannels(userID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// 레코드를 찾지 못한 경우 404 에러 반환
@@ -42,16 +42,16 @@ func (s *restServer) GetUserChannels() func(*fiber.Ctx) error {
 }
 
 // GetChannelHandler는 특정 채팅방을 반환합니다.
-func (s *restServer) GetChannel() func(*fiber.Ctx) error {
+func (s *server) GetChannel() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
-		channelId, err := strconv.ParseInt(c.Params("id"), 10, 64)
+		channelID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
-			// channelId가 올바른 int64로 변환되지 않은 경우 에러 처리
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid channel Id"})
+			// channelID가 올바른 int64로 변환되지 않은 경우 에러 처리
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid channel ID"})
 		}
 
-		channel, err := s.rdb.GetChannelByID(channelId)
+		channel, err := s.rdb.GetChannelByID(channelID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// 레코드를 찾지 못한 경우 404 에러 반환
@@ -65,7 +65,7 @@ func (s *restServer) GetChannel() func(*fiber.Ctx) error {
 }
 
 // CreateChannelHandler는 새로운 채팅방을 생성합니다.
-func (s *restServer) CreateChannel() func(*fiber.Ctx) error {
+func (s *server) CreateChannel() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
 		var cc types.CreateChannel
@@ -74,9 +74,9 @@ func (s *restServer) CreateChannel() func(*fiber.Ctx) error {
 		var channel = types.Channel{
 			Type:            "dm",
 			Name:            cc.Name,
-			HostUserId:      cc.HostUserId,
-			LastMessageId:   0,
-			LastDecryptedId: 0,
+			HostUserID:      cc.HostUserID,
+			LastMessageID:   0,
+			LastDecryptedID: 0,
 			CreatedAt:       time.Now().UTC().Format(time.RFC3339),
 			UpdatedAt:       time.Now().UTC().Format(time.RFC3339),
 		}
@@ -85,7 +85,7 @@ func (s *restServer) CreateChannel() func(*fiber.Ctx) error {
 			return c.Status(http.StatusInternalServerError).JSON(map[string]string{"error": "Failed to create channel"})
 		}
 
-		err = s.cache.SetJoinedUsers(createdChannel.Id, cc.JoinedUsers)
+		err = s.cache.SetJoinedUsers(createdChannel.ID, cc.JoinedUsers)
 		if err != nil {
 			return c.Status(http.StatusInternalServerError).JSON(map[string]string{"error": "Failed to set joined users in cache"})
 		}
@@ -93,9 +93,9 @@ func (s *restServer) CreateChannel() func(*fiber.Ctx) error {
 		// channel user 생성
 		for _, value := range cc.JoinedUsers {
 			var cuser = types.ChannelUser{
-				ChannelId:         createdChannel.Id,
-				UserId:            value,
-				LastSeenMessageId: 0,
+				ChannelID:         createdChannel.ID,
+				UserID:            value,
+				LastSeenMessageID: 0,
 			}
 			err = s.rdb.CreateChannelUser(&cuser)
 			if err != nil {

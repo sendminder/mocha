@@ -2,7 +2,7 @@ package db
 
 import (
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
@@ -13,7 +13,7 @@ import (
 type MessageRecorder interface {
 	CreateMessage(message *types.Message) error
 	GetMessagesByChannelID(channelID int64, limit int64) ([]types.Message, error)
-	GetLastMessageIdByChannelID(channelID int64) (int64, error)
+	GetLastMessageIDByChannelID(channelID int64) (int64, error)
 }
 
 func (m *mdb) CreateMessage(message *types.Message) error {
@@ -27,7 +27,7 @@ func (m *mdb) CreateMessage(message *types.Message) error {
 		TableName: aws.String("messages"),
 	}
 
-	log.Println(input)
+	slog.Info("CreateMessage", "input", input)
 
 	_, err = m.svc.PutItem(input)
 	if err != nil {
@@ -65,7 +65,7 @@ func (m *mdb) GetMessagesByChannelID(channelID int64, limit int64) ([]types.Mess
 	return messages, nil
 }
 
-func (m *mdb) GetLastMessageIdByChannelID(channelID int64) (int64, error) {
+func (m *mdb) GetLastMessageIDByChannelID(channelID int64) (int64, error) {
 	expressionAttributeValues := map[string]*dynamodb.AttributeValue{
 		":val": {
 			N: aws.String(fmt.Sprintf("%d", channelID)),
@@ -97,5 +97,5 @@ func (m *mdb) GetLastMessageIdByChannelID(channelID int64) (int64, error) {
 		return 0, err
 	}
 
-	return lastMessage.Id, nil
+	return lastMessage.ID, nil
 }

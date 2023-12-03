@@ -10,7 +10,7 @@ import (
 	"mocha/internal/db"
 )
 
-type RestServer interface {
+type Server interface {
 	ChannelHandler
 	UserHandler
 	MessageRestHandler
@@ -18,16 +18,16 @@ type RestServer interface {
 	Start(wg *sync.WaitGroup)
 }
 
-var _ RestServer = (*restServer)(nil)
+var _ Server = (*server)(nil)
 
-type restServer struct {
+type server struct {
 	rdb   db.RelationalDatabase
 	mdb   db.DynamoDatabase
 	cache cache.RedisCache
 	port  int
 }
 
-func (s *restServer) Start(wg *sync.WaitGroup) {
+func (s *server) Start(wg *sync.WaitGroup) {
 	defer wg.Done()
 
 	app := fiber.New()
@@ -52,8 +52,8 @@ func (s *restServer) Start(wg *sync.WaitGroup) {
 	}
 }
 
-func NewRestServer(rdb db.RelationalDatabase, mdb db.DynamoDatabase, cache cache.RedisCache, port int) RestServer {
-	return &restServer{
+func NewRestServer(rdb db.RelationalDatabase, mdb db.DynamoDatabase, cache cache.RedisCache, port int) Server {
+	return &server{
 		rdb:   rdb,
 		mdb:   mdb,
 		cache: cache,

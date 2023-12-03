@@ -14,13 +14,13 @@ type MessageRestHandler interface {
 	GetMessages() func(*fiber.Ctx) error
 }
 
-func (s *restServer) GetMessages() func(*fiber.Ctx) error {
+func (s *server) GetMessages() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
-		channelId, err := strconv.ParseInt(c.Params("id"), 10, 64)
+		channelID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
-			// channelId가 올바른 int64로 변환되지 않은 경우 에러 처리
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid channel Id"})
+			// channelID가 올바른 int64로 변환되지 않은 경우 에러 처리
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid channel ID"})
 		}
 		limit, err := strconv.ParseInt(c.Params("limit"), 10, 64)
 		if err != nil {
@@ -28,7 +28,7 @@ func (s *restServer) GetMessages() func(*fiber.Ctx) error {
 			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid limit"})
 		}
 
-		messages, err := s.mdb.GetMessagesByChannelID(channelId, limit)
+		messages, err := s.mdb.GetMessagesByChannelID(channelID, limit)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				// 레코드를 찾지 못한 경우 404 에러 반환

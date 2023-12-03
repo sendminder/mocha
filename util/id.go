@@ -1,5 +1,3 @@
-// id.go
-
 package util
 
 import (
@@ -46,6 +44,6 @@ func (sf *Snowflake) Generate() int64 {
 	}
 
 	sf.lastTime = currentTime
-	id := (currentTime << (sf.nodeIDBits + 12)) | (int64(sf.nodeID) << 12) | int64(sf.sequence)
-	return id
+	ID := (currentTime << (sf.nodeIDBits + 12)) | (int64(sf.nodeID) << 12) | int64(sf.sequence)
+	return ID
 }

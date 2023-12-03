@@ -1,7 +1,6 @@
 package grpc
 
 import (
-	"log"
 	"log/slog"
 	"net"
 	"strconv"
@@ -38,7 +37,7 @@ func (s *messageServer) Start(wg *sync.WaitGroup) {
 	defer wg.Done()
 	listener, err := net.Listen("tcp", ":"+s.portStr)
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		slog.Error("failed to listen", "error", err)
 	}
 	srv := grpc.NewServer(
 		grpc.KeepaliveParams(

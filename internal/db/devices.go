@@ -9,7 +9,7 @@ import (
 type DeviceRecorder interface {
 	CreateDevice(device *types.Device) (*types.Device, error)
 	GetDevice(id int64) (*types.Device, error)
-	GetDeviceByUserId(userId int64) (*types.Device, error)
+	GetDeviceByUserID(userID int64) (*types.Device, error)
 	GetDeviceByPushToken(pushToken string) (*types.Device, error)
 	UpdateDevice(id int64, updatedUser types.Device) (*types.Device, error)
 	DeleteDevice(id int64) error
@@ -40,13 +40,13 @@ func (db *rdb) GetDevice(id int64) (*types.Device, error) {
 	return &device, nil
 }
 
-func (db *rdb) GetDeviceByUserId(userId int64) (*types.Device, error) {
+func (db *rdb) GetDeviceByUserID(userID int64) (*types.Device, error) {
 	randIdx := rand.Intn(10)
 	db.loc[randIdx].Lock()
 	defer db.loc[randIdx].Unlock()
 
 	var device types.Device
-	result := db.con[randIdx].Where("user_id = ?", userId).First(&device)
+	result := db.con[randIdx].Where("user_id = ?", userID).First(&device)
 	if result.Error != nil {
 		return nil, result.Error
 	}

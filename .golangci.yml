@@ -33,6 +33,9 @@ linters:
     - gochecknoinits # Checks that no init functions are present in Go code
     - interfacebloat # A linter that checks the number of methods inside an interface.
     - depguard # Go linter that checks if package imports are in a list of acceptable packages. NOTE(Craig): 제한하고 싶은 패키지가 생길 때 다시 enable 시키기.
+    - ineffassign # Detects when assignments to existing variables are not used.
+    - gosec # Inspects source code for security problems by scanning the Go AST.
+    - containedctx # Checks that context.WithCancel is not passed a context that is already canceled.
 
     # Deprecated linters.
     - deadcode # deprecated (since v1.49.0) due to: The owner seems to have abandoned the linter.  Replaced by unused.

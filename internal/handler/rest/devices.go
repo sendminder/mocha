@@ -15,16 +15,16 @@ type DeviceHandler interface {
 	CreateDevice() func(*fiber.Ctx) error
 }
 
-func (s *restServer) GetDevice() func(*fiber.Ctx) error {
+func (s *server) GetDevice() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
-		deviceId, err := strconv.ParseInt(c.Params("id"), 10, 64)
+		deviceID, err := strconv.ParseInt(c.Params("id"), 10, 64)
 		if err != nil {
-			// deviceId가 올바른 int64로 변환되지 않은 경우 에러 처리
-			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid device Id"})
+			// deviceID가 올바른 int64로 변환되지 않은 경우 에러 처리
+			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Invalid device ID"})
 		}
 
-		device, err := s.rdb.GetDevice(deviceId)
+		device, err := s.rdb.GetDevice(deviceID)
 		if err != nil {
 			return s.handleError(c, err)
 		}
@@ -32,7 +32,7 @@ func (s *restServer) GetDevice() func(*fiber.Ctx) error {
 	}
 }
 
-func (s *restServer) CreateDevice() func(*fiber.Ctx) error {
+func (s *server) CreateDevice() func(*fiber.Ctx) error {
 	return func(c *fiber.Ctx) error {
 		c.Set("Content-Type", "application/json")
 		var cd types.CreateDevice
@@ -48,12 +48,15 @@ func (s *restServer) CreateDevice() func(*fiber.Ctx) error {
 		}
 
 		foundDevice, err := s.rdb.GetDeviceByPushToken(cd.PushToken)
+		if err != nil {
+			return s.handleError(c, err)
+		}
 		if foundDevice != nil {
 			return c.Status(http.StatusBadRequest).JSON(map[string]string{"error": "Duplicated device"})
 		}
 
 		var device = types.Device{
-			UserId:    cd.UserId,
+			UserID:    cd.UserID,
 			PushToken: cd.PushToken,
 			Platform:  cd.Platform,
 			Version:   cd.Version,
